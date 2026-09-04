@@ -253,7 +253,7 @@ function Index() {
                 </span>
               </span>
               <span className="font-mono text-[11px] tracking-[0.2em] uppercase text-mut">
-                Aurora · Auditoría
+                Dirección de Auditoría Interna
               </span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-balance max-w-[26ch]">
@@ -262,6 +262,9 @@ function Index() {
             <p className="mt-2 text-mut text-sm text-pretty max-w-[56ch]">
               Cargá cada boleta de sueldo por separado. La app calcula el
               importe de cada una y el total general del agente.
+            </p>
+            <p className="mt-1 text-faint text-xs text-pretty max-w-[56ch]">
+              Autor: Lic. Gonzalo García
             </p>
           </div>
           <div className="hidden sm:flex flex-col items-end gap-2 shrink-0">
