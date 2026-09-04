@@ -420,16 +420,41 @@ function Index() {
                   <div className="rounded-xl bg-ink/50 ring-1 ring-inset ring-white/10 p-4">
                     {calc && activa ? (
                       <div className="space-y-1 font-mono text-[13px]">
-                        <div className="flex items-center justify-between py-1.5 border-b border-line/60">
-                          <span className="text-mut">Remunerativo ÷ 0,81</span>
-                          <span>{formatCurrency(calc.remAjustado)}</span>
-                        </div>
-                        <div className="flex items-center justify-between py-1.5 border-b border-line/60">
-                          <span className="text-mut">
-                            No remunerativo − Ley 7991
-                          </span>
-                          <span>{formatCurrency(calc.noRemAjustado)}</span>
-                        </div>
+                        {calc.usaAjuste ? (
+                          <>
+                            <div className="flex items-center justify-between py-1.5 border-b border-line/60">
+                              <span className="text-mut">
+                                Remunerativo ÷ 0,81
+                              </span>
+                              <span>{formatCurrency(calc.remAjustado)}</span>
+                            </div>
+                            <div className="flex items-center justify-between py-1.5 border-b border-line/60">
+                              <span className="text-mut">
+                                No remunerativo − Ley 7991
+                              </span>
+                              <span>
+                                {formatCurrency(calc.noRemAjustado)}
+                              </span>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <div className="flex items-center justify-between py-1.5 border-b border-line/60">
+                              <span className="text-mut">Remunerativo</span>
+                              <span>
+                                {formatCurrency(calc.remunerativo)}
+                              </span>
+                            </div>
+                            <div className="flex items-center justify-between py-1.5 border-b border-line/60">
+                              <span className="text-mut">
+                                No remunerativo
+                              </span>
+                              <span>
+                                {formatCurrency(calc.noRemunerativo)}
+                              </span>
+                            </div>
+                          </>
+                        )}
                         <div className="flex items-center justify-between py-1.5 border-b border-line/60">
                           <span className="text-mut">Suma (base)</span>
                           <span>{formatCurrency(calc.base)}</span>
