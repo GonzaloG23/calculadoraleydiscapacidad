@@ -397,7 +397,7 @@ function Index() {
                       <div
                         className="grid grid-cols-2 gap-1 bg-ink/50 border border-line rounded-lg p-1"
                         role="group"
-                        aria-label={`Tratamiento provincial boleta ${index + 1}`}
+                        aria-label={`Tratamiento provincial ${boleta.numero.trim() !== "" ? boleta.numero : `#${index + 1}`}`}
                       >
                         {(["dentro", "fuera"] as const).map((op) => (
                           <button
