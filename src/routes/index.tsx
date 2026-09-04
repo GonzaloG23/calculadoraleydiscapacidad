@@ -152,9 +152,15 @@ const inputBase =
 const inputOk = "border-line focus:border-cyan/60 focus:ring-cyan/20";
 const inputErr = "border-err/60 focus:border-err focus:ring-err/30";
 
+function siguienteId(prev: Boleta[]): string {
+  const max = prev.reduce((acc, b) => {
+    const n = Number(b.id.slice(1));
+    return Number.isFinite(n) && n > acc ? n : acc;
+  }, 0);
+  return `b${max + 1}`;
+}
+
 function Index() {
-  const counter = useRef(1);
-  const nextId = () => `b${++counter.current}`;
   const [boletas, setBoletas] = useState<Boleta[]>(() => [nuevaBoleta("b1")]);
 
   const update = (id: string, patch: Partial<Boleta>) =>
@@ -163,16 +169,16 @@ function Index() {
     );
 
   const addBoleta = () =>
-    setBoletas((prev) => [...prev, nuevaBoleta(nextId())]);
+    setBoletas((prev) => [...prev, nuevaBoleta(siguienteId(prev))]);
 
   const removeBoleta = (id: string) =>
     setBoletas((prev) =>
       prev.length === 1
-        ? [nuevaBoleta(nextId())]
+        ? [nuevaBoleta(siguienteId(prev))]
         : prev.filter((b) => b.id !== id),
     );
 
-  const handleReset = () => setBoletas([nuevaBoleta(nextId())]);
+  const handleReset = () => setBoletas([nuevaBoleta("b1")]);
   const handlePrint = () => window.print();
 
   const resultados = useMemo(
