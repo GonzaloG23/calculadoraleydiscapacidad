@@ -1,5 +1,12 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useEffect, useMemo, useState } from "react";
+
+import { formatCurrency, isValidAmount, parseAmount } from "../lib/amount";
+import {
+  cargarPlanilla,
+  planillaTieneDatos,
+  type PlanillaValores,
+} from "../lib/planilla";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -30,65 +37,6 @@ export const Route = createFileRoute("/")({
   }),
 });
 
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat("es-AR", {
-    style: "currency",
-    currency: "ARS",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(value);
-}
-
-function isValidAmount(value: string): boolean {
-  const trimmed = value.trim();
-  if (trimmed === "") return true;
-
-  // Allow digits, commas, dots and spaces as thousand separators.
-  const cleaned = trimmed.replace(/ /g, "").replace(/[^0-9.,]/g, "");
-  if (cleaned !== trimmed.replace(/ /g, "")) return false;
-
-  const lastComma = cleaned.lastIndexOf(",");
-  const lastDot = cleaned.lastIndexOf(".");
-
-  let normalized: string;
-  if (lastComma > lastDot) {
-    // Comma is the decimal separator.
-    const [whole, decimal = ""] = cleaned.split(",");
-    if (cleaned.split(",").length > 2) return false;
-    normalized = (whole ?? "").replace(/\./g, "") + (decimal ? "." + decimal : "");
-  } else if (lastDot > lastComma) {
-    // Dot is the decimal separator.
-    const [whole, decimal = ""] = cleaned.split(".");
-    if (cleaned.split(".").length > 2) return false;
-    normalized = (whole ?? "").replace(/,/g, "") + (decimal ? "." + decimal : "");
-  } else {
-    normalized = cleaned;
-  }
-
-  const num = parseFloat(normalized);
-  return !isNaN(num);
-}
-
-function parseAmount(value: string): number {
-  if (!isValidAmount(value) || value.trim() === "") return 0;
-
-  const trimmed = value.trim().replace(/ /g, "");
-  const lastComma = trimmed.lastIndexOf(",");
-  const lastDot = trimmed.lastIndexOf(".");
-
-  let normalized: string;
-  if (lastComma > lastDot) {
-    const [whole, decimal = ""] = trimmed.split(",");
-    normalized = (whole ?? "").replace(/\./g, "") + (decimal ? "." + decimal : "");
-  } else if (lastDot > lastComma) {
-    const [whole, decimal = ""] = trimmed.split(".");
-    normalized = (whole ?? "").replace(/,/g, "") + (decimal ? "." + decimal : "");
-  } else {
-    normalized = trimmed;
-  }
-
-  return parseFloat(normalized);
-}
 
 type Tratamiento = "dentro" | "fuera";
 
