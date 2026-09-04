@@ -542,7 +542,7 @@ function Index() {
                         <span className="text-mut text-[13px]">
                           {boleta.numero.trim() !== ""
                             ? boleta.numero
-                            : `Boleta ${String(index + 1).padStart(2, "0")}`}{" "}
+                            : `#${String(index + 1).padStart(2, "0")}`}{" "}
                           <span className="text-faint">
                             ({boleta.tratamiento})
                           </span>
