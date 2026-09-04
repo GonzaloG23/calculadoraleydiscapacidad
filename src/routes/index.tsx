@@ -39,22 +39,55 @@ function formatCurrency(value: number): string {
   }).format(value);
 }
 
-function parseAmount(value: string): number {
-  const cleaned = value.replace(/[^0-9.,]/g, "");
-  if (!cleaned) return 0;
+function isValidAmount(value: string): boolean {
+  const trimmed = value.trim();
+  if (trimmed === "") return true;
+
+  // Allow digits, commas, dots and spaces as thousand separators.
+  const cleaned = trimmed.replace(/ /g, "").replace(/[^0-9.,]/g, "");
+  if (cleaned !== trimmed.replace(/ /g, "")) return false;
 
   const lastComma = cleaned.lastIndexOf(",");
   const lastDot = cleaned.lastIndexOf(".");
 
   let normalized: string;
   if (lastComma > lastDot) {
-    normalized = cleaned.replace(/\./g, "").replace(/,/g, ".");
+    // Comma is the decimal separator.
+    const parts = cleaned.split(",");
+    if (parts.length > 2) return false;
+    normalized = parts[0].replace(/\./g, "") + (parts[1] ? "." + parts[1] : "");
+  } else if (lastDot > lastComma) {
+    // Dot is the decimal separator.
+    const parts = cleaned.split(".");
+    if (parts.length > 2) return false;
+    normalized = parts[0].replace(/,/g, "") + (parts[1] ? "." + parts[1] : "");
   } else {
-    normalized = cleaned.replace(/,/g, "");
+    normalized = cleaned;
   }
 
   const num = parseFloat(normalized);
-  return isNaN(num) ? NaN : num;
+  return !isNaN(num);
+}
+
+function parseAmount(value: string): number {
+  if (!isValidAmount(value) || value.trim() === "") return 0;
+
+  const trimmed = value.trim().replace(/ /g, "");
+  const lastComma = trimmed.lastIndexOf(",");
+  const lastDot = trimmed.lastIndexOf(".");
+
+  let normalized: string;
+  if (lastComma > lastDot) {
+    const parts = trimmed.split(",");
+    normalized = parts[0].replace(/\./g, "") + (parts[1] ? "." + parts[1] : "");
+  } else if (lastDot > lastComma) {
+    const parts = trimmed.split(".");
+    normalized = parts[0].replace(/,/g, "") + (parts[1] ? "." + parts[1] : "");
+  } else {
+    normalized = trimmed;
+  }
+
+  return parseFloat(normalized);
 }
 
 type Tratamiento = "dentro" | "fuera";
