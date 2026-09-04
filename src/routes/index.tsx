@@ -93,6 +93,9 @@ function parseAmount(value: string): number {
 type Tratamiento = "dentro" | "fuera";
 
 interface CalculationResult {
+  usaAjuste: boolean;
+  remunerativo: number;
+  noRemunerativo: number;
   remAjustado: number;
   noRemAjustado: number;
   base: number;
@@ -128,15 +131,43 @@ function calcular(b: Boleta): CalculationResult | null {
   ) {
     return null;
   }
-  const remAjustado =
-    b.remunerativo.trim() === "" ? 0 : parseAmount(b.remunerativo) / 0.81;
-  const noRemAjustado =
-    b.noRemunerativo.trim() === ""
-      ? 0
-      : parseAmount(b.noRemunerativo) - parseAmount(b.ley7991);
-  const base = remAjustado + noRemAjustado;
+
+  const remunerativo =
+    b.remunerativo.trim() === "" ? 0 : parseAmount(b.remunerativo);
+  const noRemunerativo =
+    b.noRemunerativo.trim() === "" ? 0 : parseAmount(b.noRemunerativo);
+  const ley7991 = b.ley7991.trim() === "" ? 0 : parseAmount(b.ley7991);
+
   const factor = b.tratamiento === "dentro" ? 1.5 : 3;
-  return { remAjustado, noRemAjustado, base, factor, resultado: base * factor };
+  const usaAjuste = ley7991 !== 0;
+
+  if (usaAjuste) {
+    const remAjustado = remunerativo / 0.81;
+    const noRemAjustado = noRemunerativo - ley7991;
+    const base = remAjustado + noRemAjustado;
+    return {
+      usaAjuste,
+      remunerativo,
+      noRemunerativo,
+      remAjustado,
+      noRemAjustado,
+      base,
+      factor,
+      resultado: base * factor,
+    };
+  }
+
+  const base = remunerativo + noRemunerativo;
+  return {
+    usaAjuste,
+    remunerativo,
+    noRemunerativo,
+    remAjustado: 0,
+    noRemAjustado: 0,
+    base,
+    factor,
+    resultado: base * factor,
+  };
 }
 
 function tieneDatos(b: Boleta): boolean {
@@ -389,16 +420,41 @@ function Index() {
                   <div className="rounded-xl bg-ink/50 ring-1 ring-inset ring-white/10 p-4">
                     {calc && activa ? (
                       <div className="space-y-1 font-mono text-[13px]">
-                        <div className="flex items-center justify-between py-1.5 border-b border-line/60">
-                          <span className="text-mut">Remunerativo ÷ 0,81</span>
-                          <span>{formatCurrency(calc.remAjustado)}</span>
-                        </div>
-                        <div className="flex items-center justify-between py-1.5 border-b border-line/60">
-                          <span className="text-mut">
-                            No remunerativo − Ley 7991
-                          </span>
-                          <span>{formatCurrency(calc.noRemAjustado)}</span>
-                        </div>
+                        {calc.usaAjuste ? (
+                          <>
+                            <div className="flex items-center justify-between py-1.5 border-b border-line/60">
+                              <span className="text-mut">
+                                Remunerativo ÷ 0,81
+                              </span>
+                              <span>{formatCurrency(calc.remAjustado)}</span>
+                            </div>
+                            <div className="flex items-center justify-between py-1.5 border-b border-line/60">
+                              <span className="text-mut">
+                                No remunerativo − Ley 7991
+                              </span>
+                              <span>
+                                {formatCurrency(calc.noRemAjustado)}
+                              </span>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <div className="flex items-center justify-between py-1.5 border-b border-line/60">
+                              <span className="text-mut">Remunerativo</span>
+                              <span>
+                                {formatCurrency(calc.remunerativo)}
+                              </span>
+                            </div>
+                            <div className="flex items-center justify-between py-1.5 border-b border-line/60">
+                              <span className="text-mut">
+                                No remunerativo
+                              </span>
+                              <span>
+                                {formatCurrency(calc.noRemunerativo)}
+                              </span>
+                            </div>
+                          </>
+                        )}
                         <div className="flex items-center justify-between py-1.5 border-b border-line/60">
                           <span className="text-mut">Suma (base)</span>
                           <span>{formatCurrency(calc.base)}</span>
