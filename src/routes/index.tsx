@@ -109,11 +109,9 @@ interface Boleta {
   tratamiento: Tratamiento;
 }
 
-let idCounter = 0;
-function nuevaBoleta(): Boleta {
-  idCounter += 1;
+function nuevaBoleta(id: string): Boleta {
   return {
-    id: `b${idCounter}`,
+    id,
     numero: "",
     remunerativo: "",
     noRemunerativo: "",
