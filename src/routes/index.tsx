@@ -53,14 +53,14 @@ function isValidAmount(value: string): boolean {
   let normalized: string;
   if (lastComma > lastDot) {
     // Comma is the decimal separator.
-    const parts = cleaned.split(",");
-    if (parts.length > 2) return false;
-    normalized = parts[0].replace(/\./g, "") + (parts[1] ? "." + parts[1] : "");
+    const [whole, decimal = ""] = cleaned.split(",");
+    if (cleaned.split(",").length > 2) return false;
+    normalized = (whole ?? "").replace(/\./g, "") + (decimal ? "." + decimal : "");
   } else if (lastDot > lastComma) {
     // Dot is the decimal separator.
-    const parts = cleaned.split(".");
-    if (parts.length > 2) return false;
-    normalized = parts[0].replace(/,/g, "") + (parts[1] ? "." + parts[1] : "");
+    const [whole, decimal = ""] = cleaned.split(".");
+    if (cleaned.split(".").length > 2) return false;
+    normalized = (whole ?? "").replace(/,/g, "") + (decimal ? "." + decimal : "");
   } else {
     normalized = cleaned;
   }
