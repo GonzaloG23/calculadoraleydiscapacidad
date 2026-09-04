@@ -100,48 +100,97 @@ interface CalculationResult {
   resultado: number;
 }
 
+interface Boleta {
+  id: string;
+  numero: string;
+  remunerativo: string;
+  noRemunerativo: string;
+  ley7991: string;
+  tratamiento: Tratamiento;
+}
+
+let idCounter = 0;
+function nuevaBoleta(): Boleta {
+  idCounter += 1;
+  return {
+    id: `b${idCounter}`,
+    numero: "",
+    remunerativo: "",
+    noRemunerativo: "",
+    ley7991: "",
+    tratamiento: "dentro",
+  };
+}
+
+function calcular(b: Boleta): CalculationResult | null {
+  if (
+    !isValidAmount(b.remunerativo) ||
+    !isValidAmount(b.noRemunerativo) ||
+    !isValidAmount(b.ley7991)
+  ) {
+    return null;
+  }
+  const remAjustado =
+    b.remunerativo.trim() === "" ? 0 : parseAmount(b.remunerativo) / 0.81;
+  const noRemAjustado =
+    b.noRemunerativo.trim() === ""
+      ? 0
+      : parseAmount(b.noRemunerativo) - parseAmount(b.ley7991);
+  const base = remAjustado + noRemAjustado;
+  const factor = b.tratamiento === "dentro" ? 1.5 : 3;
+  return { remAjustado, noRemAjustado, base, factor, resultado: base * factor };
+}
+
+function tieneDatos(b: Boleta): boolean {
+  return (
+    b.remunerativo.trim() !== "" ||
+    b.noRemunerativo.trim() !== "" ||
+    b.ley7991.trim() !== ""
+  );
+}
+
+const inputBase =
+  "w-full bg-ink/50 border rounded-lg px-3 py-2 text-sm font-mono text-fg placeholder:text-faint focus:outline-none focus:ring-2 transition-colors";
+const inputOk = "border-line focus:border-cyan/60 focus:ring-cyan/20";
+const inputErr = "border-err/60 focus:border-err focus:ring-err/30";
+
 function Index() {
-  const [boletas, setBoletas] = useState("");
-  const [remunerativo, setRemunerativo] = useState("");
-  const [noRemunerativo, setNoRemunerativo] = useState("");
-  const [ley7991, setLey7991] = useState("");
-  const [tratamiento, setTratamiento] = useState<Tratamiento>("dentro");
+  const [boletas, setBoletas] = useState<Boleta[]>(() => [nuevaBoleta()]);
 
-  const isRemValid = isValidAmount(remunerativo);
-  const isNoRemValid = isValidAmount(noRemunerativo);
-  const isLeyValid = isValidAmount(ley7991);
-  const hasValidInputs = isRemValid && isNoRemValid && isLeyValid;
+  const update = (id: string, patch: Partial<Boleta>) =>
+    setBoletas((prev) =>
+      prev.map((b) => (b.id === id ? { ...b, ...patch } : b)),
+    );
 
-  const calculations: CalculationResult | null = useMemo(() => {
-    if (!hasValidInputs) return null;
+  const addBoleta = () => setBoletas((prev) => [...prev, nuevaBoleta()]);
 
-    const remAjustado =
-      remunerativo === "" ? 0 : parseAmount(remunerativo) / 0.81;
-    const noRemAjustado =
-      noRemunerativo === "" ? 0 : parseAmount(noRemunerativo) - parseAmount(ley7991);
-    const base = remAjustado + noRemAjustado;
-    const factor = tratamiento === "dentro" ? 1.5 : 3;
-    const resultado = base * factor;
+  const removeBoleta = (id: string) =>
+    setBoletas((prev) =>
+      prev.length === 1 ? [nuevaBoleta()] : prev.filter((b) => b.id !== id),
+    );
 
-    return { remAjustado, noRemAjustado, base, factor, resultado };
-  }, [tratamiento, hasValidInputs, remunerativo, noRemunerativo, ley7991]);
+  const handleReset = () => setBoletas([nuevaBoleta()]);
+  const handlePrint = () => window.print();
 
-  const hasNumericInput =
-    remunerativo.trim() !== "" ||
-    noRemunerativo.trim() !== "" ||
-    ley7991.trim() !== "";
+  const resultados = useMemo(
+    () => boletas.map((b) => ({ boleta: b, calc: calcular(b) })),
+    [boletas],
+  );
 
-  const handleReset = () => {
-    setBoletas("");
-    setRemunerativo("");
-    setNoRemunerativo("");
-    setLey7991("");
-    setTratamiento("dentro");
-  };
-
-  const handlePrint = () => {
-    window.print();
-  };
+  const conDatos = resultados.filter(({ boleta }) => tieneDatos(boleta));
+  const hayInvalidos = resultados.some(
+    ({ boleta, calc }) => tieneDatos(boleta) && calc === null,
+  );
+  const totalGeneral = conDatos.reduce(
+    (acc, { calc }) => acc + (calc?.resultado ?? 0),
+    0,
+  );
+  const totalDentro = conDatos.reduce(
+    (acc, { boleta, calc }) =>
+      acc + (boleta.tratamiento === "dentro" ? (calc?.resultado ?? 0) : 0),
+    0,
+  );
+  const totalFuera = totalGeneral - totalDentro;
 
   return (
     <div className="min-h-screen bg-ink text-fg font-sans antialiased">
@@ -170,261 +219,330 @@ function Index() {
             <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-balance max-w-[26ch]">
               Calculadora de Ley de Discapacidad
             </h1>
-            <p className="mt-2 text-mut text-sm text-pretty max-w-[52ch]">
-              Tratamiento de remunerativo y no remunerativo según Ley 7991 —
-              dentro o fuera de la provincia. Cálculo inmediato para
-              verificación contra planillas.
+            <p className="mt-2 text-mut text-sm text-pretty max-w-[56ch]">
+              Cargá cada boleta de sueldo por separado. La app calcula el
+              importe de cada una y el total general del agente.
             </p>
           </div>
           <div className="hidden sm:flex flex-col items-end gap-2 shrink-0">
             <span className="font-mono text-[10px] tracking-[0.18em] uppercase text-faint">
-              v1.0 · local
+              v1.1 · local
             </span>
             <span className="size-2 rounded-full bg-mint" />
           </div>
         </header>
 
-        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-6">
-          <section className="bg-panel/70 backdrop-blur-xl ring-1 ring-white/10 rounded-2xl p-6">
-            <div className="flex items-center justify-between mb-5">
-              <h2 className="text-[12px] font-semibold uppercase tracking-[0.14em] text-mut">
-                Datos de la planilla
-              </h2>
-              <span className="font-mono text-[10px] text-faint">01 / 02</span>
-            </div>
+        <div className="space-y-4">
+          {resultados.map(({ boleta, calc }, index) => {
+            const remOk = isValidAmount(boleta.remunerativo);
+            const noRemOk = isValidAmount(boleta.noRemunerativo);
+            const leyOk = isValidAmount(boleta.ley7991);
+            const activa = tieneDatos(boleta);
 
-            <div className="space-y-4">
-              <div>
-                <label
-                  htmlFor="boletas"
-                  className="block text-[13px] font-medium text-fg mb-1.5"
-                >
-                  N.º de boletas
-                </label>
-                <input
-                  id="boletas"
-                  type="text"
-                  value={boletas}
-                  onChange={(e) => setBoletas(e.target.value)}
-                  placeholder="Ej. B-2024-0917"
-                  className="w-full bg-ink/50 border border-line rounded-lg px-3 py-2.5 text-sm font-mono text-fg placeholder:text-faint focus:outline-none focus:border-cyan/60 focus:ring-2 focus:ring-cyan/20 transition-colors"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div>
-                  <label
-                    htmlFor="rem"
-                    className="block text-[12px] font-medium text-fg mb-1.5"
-                  >
-                    Remunerativo
-                  </label>
-                  <input
-                    id="rem"
-                    type="text"
-                    inputMode="decimal"
-                    value={remunerativo}
-                    onChange={(e) => setRemunerativo(e.target.value)}
-                    placeholder="0,00"
-                    className={`w-full bg-ink/50 border rounded-lg px-3 py-2.5 text-sm font-mono text-fg placeholder:text-faint focus:outline-none focus:ring-2 transition-colors ${
-                      isRemValid
-                        ? "border-line focus:border-cyan/60 focus:ring-cyan/20"
-                        : "border-err/60 focus:border-err focus:ring-err/30"
-                    }`}
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="norem"
-                    className="block text-[12px] font-medium text-fg mb-1.5"
-                  >
-                    No remunerativo
-                  </label>
-                  <input
-                    id="norem"
-                    type="text"
-                    inputMode="decimal"
-                    value={noRemunerativo}
-                    onChange={(e) => setNoRemunerativo(e.target.value)}
-                    placeholder="0,00"
-                    className={`w-full bg-ink/50 border rounded-lg px-3 py-2.5 text-sm font-mono text-fg placeholder:text-faint focus:outline-none focus:ring-2 transition-colors ${
-                      isNoRemValid
-                        ? "border-line focus:border-cyan/60 focus:ring-cyan/20"
-                        : "border-err/60 focus:border-err focus:ring-err/30"
-                    }`}
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="ley"
-                    className="block text-[12px] font-medium text-fg mb-1.5"
-                  >
-                    Ley 7991
-                  </label>
-                  <input
-                    id="ley"
-                    type="text"
-                    inputMode="decimal"
-                    value={ley7991}
-                    onChange={(e) => setLey7991(e.target.value)}
-                    placeholder="0,00"
-                    className={`w-full bg-ink/50 border rounded-lg px-3 py-2.5 text-sm font-mono text-fg placeholder:text-faint focus:outline-none focus:ring-2 transition-colors ${
-                      isLeyValid
-                        ? "border-line focus:border-cyan/60 focus:ring-cyan/20"
-                        : "border-err/60 focus:border-err focus:ring-err/30"
-                    }`}
-                  />
-                </div>
-              </div>
-
-              <div>
-                <span className="block text-[13px] font-medium text-fg mb-1.5">
-                  Tratamiento provincial
-                </span>
-                <div
-                  className="grid grid-cols-2 gap-1 bg-ink/50 border border-line rounded-lg p-1"
-                  role="group"
-                  aria-label="Tratamiento provincial"
-                >
+            return (
+              <section
+                key={boleta.id}
+                className="bg-panel/70 backdrop-blur-xl ring-1 ring-white/10 rounded-2xl p-5 sm:p-6"
+              >
+                <div className="flex items-center justify-between gap-4 mb-4">
+                  <div className="flex items-center gap-2.5">
+                    <span className="font-mono text-[10px] tracking-[0.16em] uppercase text-faint">
+                      Boleta {String(index + 1).padStart(2, "0")}
+                    </span>
+                    {activa && calc && (
+                      <span className="font-mono text-[12px] text-mint">
+                        {formatCurrency(calc.resultado)}
+                      </span>
+                    )}
+                  </div>
                   <button
                     type="button"
-                    onClick={() => setTratamiento("dentro")}
-                    className={`py-2 rounded-lg text-sm font-semibold transition-colors ${
-                      tratamiento === "dentro"
-                        ? "bg-cyan/15 text-cyan ring-1 ring-inset ring-cyan/40"
-                        : "text-mut hover:text-fg"
-                    }`}
+                    onClick={() => removeBoleta(boleta.id)}
+                    aria-label={`Quitar boleta ${index + 1}`}
+                    className="print-hidden text-faint hover:text-err text-xs font-mono ring-1 ring-inset ring-white/10 hover:ring-err/40 rounded-md px-2 py-1 transition-colors"
                   >
-                    Dentro
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setTratamiento("fuera")}
-                    className={`py-2 rounded-lg text-sm font-semibold transition-colors ${
-                      tratamiento === "fuera"
-                        ? "bg-cyan/15 text-cyan ring-1 ring-inset ring-cyan/40"
-                        : "text-mut hover:text-fg"
-                    }`}
-                  >
-                    Fuera
+                    ✕ Quitar
                   </button>
                 </div>
-              </div>
-            </div>
 
-            <div className="mt-6 pt-5 border-t border-line/70 flex flex-wrap gap-2.5 print-hidden">
-              <button
-                type="button"
-                onClick={handleReset}
-                className="inline-flex items-center gap-2 bg-cyan/15 text-cyan ring-1 ring-inset ring-cyan/40 hover:bg-cyan/25 rounded-lg px-4 py-2 text-sm font-semibold transition-colors"
-              >
-                <span className="size-4 shrink-0 grid place-items-center">
-                  <span className="font-mono text-[13px]">↻</span>
-                </span>
-                Limpiar
-              </button>
-              <button
-                type="button"
-                onClick={handlePrint}
-                className="inline-flex items-center gap-2 text-mut hover:text-fg ring-1 ring-inset ring-white/10 hover:ring-white/20 rounded-lg px-4 py-2 text-sm font-medium transition-colors"
-              >
-                <span className="size-4 shrink-0 grid place-items-center">
-                  <span className="font-mono text-[13px]">⎙</span>
-                </span>
-                Imprimir
-              </button>
-            </div>
-          </section>
+                <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] gap-5">
+                  <div className="space-y-3">
+                    <div>
+                      <label
+                        htmlFor={`num-${boleta.id}`}
+                        className="block text-[12px] font-medium text-fg mb-1.5"
+                      >
+                        N.º de boleta
+                      </label>
+                      <input
+                        id={`num-${boleta.id}`}
+                        type="text"
+                        value={boleta.numero}
+                        onChange={(e) =>
+                          update(boleta.id, { numero: e.target.value })
+                        }
+                        placeholder="Ej. B-2024-0917"
+                        className={`${inputBase} ${inputOk}`}
+                      />
+                    </div>
 
-          <section className="bg-panel/70 backdrop-blur-xl ring-1 ring-white/10 rounded-2xl p-6 flex flex-col">
-            <div className="flex items-center justify-between mb-5">
-              <h2 className="text-[12px] font-semibold uppercase tracking-[0.14em] text-mut">
-                Desglose paso a paso
-              </h2>
-              <span className="font-mono text-[10px] text-faint">02 / 02</span>
-            </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div>
+                        <label
+                          htmlFor={`rem-${boleta.id}`}
+                          className="block text-[12px] font-medium text-fg mb-1.5"
+                        >
+                          Remunerativo
+                        </label>
+                        <input
+                          id={`rem-${boleta.id}`}
+                          type="text"
+                          inputMode="decimal"
+                          value={boleta.remunerativo}
+                          onChange={(e) =>
+                            update(boleta.id, { remunerativo: e.target.value })
+                          }
+                          placeholder="0,00"
+                          className={`${inputBase} ${remOk ? inputOk : inputErr}`}
+                        />
+                      </div>
+                      <div>
+                        <label
+                          htmlFor={`norem-${boleta.id}`}
+                          className="block text-[12px] font-medium text-fg mb-1.5"
+                        >
+                          No remunerativo
+                        </label>
+                        <input
+                          id={`norem-${boleta.id}`}
+                          type="text"
+                          inputMode="decimal"
+                          value={boleta.noRemunerativo}
+                          onChange={(e) =>
+                            update(boleta.id, {
+                              noRemunerativo: e.target.value,
+                            })
+                          }
+                          placeholder="0,00"
+                          className={`${inputBase} ${noRemOk ? inputOk : inputErr}`}
+                        />
+                      </div>
+                      <div>
+                        <label
+                          htmlFor={`ley-${boleta.id}`}
+                          className="block text-[12px] font-medium text-fg mb-1.5"
+                        >
+                          Ley 7991
+                        </label>
+                        <input
+                          id={`ley-${boleta.id}`}
+                          type="text"
+                          inputMode="decimal"
+                          value={boleta.ley7991}
+                          onChange={(e) =>
+                            update(boleta.id, { ley7991: e.target.value })
+                          }
+                          placeholder="0,00"
+                          className={`${inputBase} ${leyOk ? inputOk : inputErr}`}
+                        />
+                      </div>
+                    </div>
 
-            {calculations ? (
-              <>
-                <div className="space-y-1 font-mono text-sm">
-                  <div className="flex items-center justify-between py-2.5 border-b border-line/60">
-                    <span className="text-mut text-[13px]">
-                      Remunerativo ÷ 0,81
-                    </span>
-                    <span className="text-fg">
-                      {formatCurrency(calculations.remAjustado)}
-                    </span>
+                    <div>
+                      <span className="block text-[12px] font-medium text-fg mb-1.5">
+                        Tratamiento provincial
+                      </span>
+                      <div
+                        className="grid grid-cols-2 gap-1 bg-ink/50 border border-line rounded-lg p-1"
+                        role="group"
+                        aria-label={`Tratamiento provincial boleta ${index + 1}`}
+                      >
+                        {(["dentro", "fuera"] as const).map((op) => (
+                          <button
+                            key={op}
+                            type="button"
+                            onClick={() =>
+                              update(boleta.id, { tratamiento: op })
+                            }
+                            className={`py-1.5 rounded-lg text-sm font-semibold capitalize transition-colors ${
+                              boleta.tratamiento === op
+                                ? "bg-cyan/15 text-cyan ring-1 ring-inset ring-cyan/40"
+                                : "text-mut hover:text-fg"
+                            }`}
+                          >
+                            {op}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex items-center justify-between py-2.5 border-b border-line/60">
-                    <span className="text-mut text-[13px]">
-                      No remunerativo − Ley 7991
-                    </span>
-                    <span className="text-fg">
-                      {formatCurrency(calculations.noRemAjustado)}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between py-2.5 border-b border-line/60">
-                    <span className="text-mut text-[13px]">Suma (base)</span>
-                    <span className="text-fg">
-                      {formatCurrency(calculations.base)}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between py-2.5">
-                    <span className="text-mut text-[13px]">
-                      Factor ×{calculations.factor.toFixed(1).replace(".", ",")}{" "}
-                      <span className="text-cyan">({tratamiento})</span>
-                    </span>
-                    <span className="text-fg">
-                      {formatCurrency(calculations.resultado)}
-                    </span>
+
+                  <div className="rounded-xl bg-ink/50 ring-1 ring-inset ring-white/10 p-4">
+                    {calc && activa ? (
+                      <div className="space-y-1 font-mono text-[13px]">
+                        <div className="flex items-center justify-between py-1.5 border-b border-line/60">
+                          <span className="text-mut">Remunerativo ÷ 0,81</span>
+                          <span>{formatCurrency(calc.remAjustado)}</span>
+                        </div>
+                        <div className="flex items-center justify-between py-1.5 border-b border-line/60">
+                          <span className="text-mut">
+                            No remunerativo − Ley 7991
+                          </span>
+                          <span>{formatCurrency(calc.noRemAjustado)}</span>
+                        </div>
+                        <div className="flex items-center justify-between py-1.5 border-b border-line/60">
+                          <span className="text-mut">Suma (base)</span>
+                          <span>{formatCurrency(calc.base)}</span>
+                        </div>
+                        <div className="flex items-center justify-between pt-2">
+                          <span className="text-mut">
+                            Factor ×{calc.factor.toFixed(1).replace(".", ",")}{" "}
+                            <span className="text-cyan">
+                              ({boleta.tratamiento})
+                            </span>
+                          </span>
+                          <span className="text-fg text-base font-semibold">
+                            {formatCurrency(calc.resultado)}
+                          </span>
+                        </div>
+                      </div>
+                    ) : activa && !calc ? (
+                      <p className="text-[12px] text-err/90 leading-snug">
+                        Revisá los importes de esta boleta: usá coma o punto
+                        como separador decimal y evitá letras.
+                      </p>
+                    ) : (
+                      <p className="text-[12px] text-faint leading-snug">
+                        Ingresá los importes de esta boleta para ver el
+                        desglose.
+                      </p>
+                    )}
                   </div>
                 </div>
-
-                <div className="mt-6 rounded-xl bg-ink/60 ring-1 ring-inset ring-white/10 p-5">
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-cyan">
-                      Resultado
-                    </span>
-                    <span className="inline-flex items-center gap-1.5 text-[11px] text-mint">
-                      <span className="size-1.5 rounded-full bg-mint" />
-                      Recalculado
-                    </span>
-                  </div>
-                  <div className="font-mono text-[40px] leading-none font-semibold tracking-tight text-fg">
-                    {formatCurrency(calculations.resultado)}
-                  </div>
-                  <div className="mt-2 text-[13px] text-mut">
-                    Ley 7991 · {tratamiento} de la provincia
-                    {boletas ? ` · boleta ${boletas}` : ""}
-                  </div>
-                </div>
-              </>
-            ) : (
-              <div className="flex-1 flex flex-col items-center justify-center text-center py-10">
-                <span className="font-mono text-4xl text-faint mb-3">Σ</span>
-                <p className="text-sm text-mut max-w-[32ch]">
-                  Ingresá los valores de la planilla para ver el desglose del
-                  cálculo.
-                </p>
-              </div>
-            )}
-
-            {!hasValidInputs && hasNumericInput && (
-              <div className="mt-4 rounded-lg bg-err/10 ring-1 ring-inset ring-err/30 px-3.5 py-2.5 flex items-start gap-2.5">
-                <span className="mt-0.5 font-mono text-err text-sm">!</span>
-                <p className="text-[12px] text-err/90 leading-snug">
-                  Algunos campos numéricos no son válidos. Revisá que uses coma
-                  o punto como separador decimal y evitás letras.
-                </p>
-              </div>
-            )}
-
-            <p className="mt-auto pt-5 text-[11px] text-faint leading-relaxed">
-              Herramienta local de verificación. Sin autenticación ni
-              persistencia; los datos no se almacenan.
-            </p>
-          </section>
+              </section>
+            );
+          })}
         </div>
+
+        <div className="mt-5 flex flex-wrap gap-2.5 print-hidden">
+          <button
+            type="button"
+            onClick={addBoleta}
+            className="inline-flex items-center gap-2 bg-cyan/15 text-cyan ring-1 ring-inset ring-cyan/40 hover:bg-cyan/25 rounded-lg px-4 py-2 text-sm font-semibold transition-colors"
+          >
+            <span className="font-mono text-[13px]">+</span>
+            Agregar boleta
+          </button>
+          <button
+            type="button"
+            onClick={handleReset}
+            className="inline-flex items-center gap-2 text-mut hover:text-fg ring-1 ring-inset ring-white/10 hover:ring-white/20 rounded-lg px-4 py-2 text-sm font-medium transition-colors"
+          >
+            <span className="font-mono text-[13px]">↻</span>
+            Limpiar todo
+          </button>
+          <button
+            type="button"
+            onClick={handlePrint}
+            className="inline-flex items-center gap-2 text-mut hover:text-fg ring-1 ring-inset ring-white/10 hover:ring-white/20 rounded-lg px-4 py-2 text-sm font-medium transition-colors"
+          >
+            <span className="font-mono text-[13px]">⎙</span>
+            Imprimir
+          </button>
+        </div>
+
+        <section className="mt-6 bg-panel/70 backdrop-blur-xl ring-1 ring-white/10 rounded-2xl p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-[12px] font-semibold uppercase tracking-[0.14em] text-mut">
+              Total del agente
+            </h2>
+            <span className="font-mono text-[10px] text-faint">
+              {conDatos.length} boleta{conDatos.length === 1 ? "" : "s"} con
+              datos
+            </span>
+          </div>
+
+          {conDatos.length > 0 ? (
+            <>
+              <div className="space-y-1 font-mono text-sm mb-5">
+                {resultados.map(
+                  ({ boleta, calc }, index) =>
+                    tieneDatos(boleta) && (
+                      <div
+                        key={boleta.id}
+                        className="flex items-center justify-between py-1.5 border-b border-line/50"
+                      >
+                        <span className="text-mut text-[13px]">
+                          {boleta.numero.trim() !== ""
+                            ? boleta.numero
+                            : `Boleta ${String(index + 1).padStart(2, "0")}`}{" "}
+                          <span className="text-faint">
+                            ({boleta.tratamiento})
+                          </span>
+                        </span>
+                        <span className={calc ? "text-fg" : "text-err"}>
+                          {calc ? formatCurrency(calc.resultado) : "—"}
+                        </span>
+                      </div>
+                    ),
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
+                <div className="rounded-lg bg-ink/50 ring-1 ring-inset ring-white/10 px-4 py-3">
+                  <div className="text-[11px] uppercase tracking-[0.14em] text-faint mb-1">
+                    Dentro de la provincia
+                  </div>
+                  <div className="font-mono text-lg text-fg">
+                    {formatCurrency(totalDentro)}
+                  </div>
+                </div>
+                <div className="rounded-lg bg-ink/50 ring-1 ring-inset ring-white/10 px-4 py-3">
+                  <div className="text-[11px] uppercase tracking-[0.14em] text-faint mb-1">
+                    Fuera de la provincia
+                  </div>
+                  <div className="font-mono text-lg text-fg">
+                    {formatCurrency(totalFuera)}
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-xl bg-ink/60 ring-1 ring-inset ring-white/10 p-5">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-cyan">
+                    Total final
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 text-[11px] text-mint">
+                    <span className="size-1.5 rounded-full bg-mint" />
+                    Recalculado
+                  </span>
+                </div>
+                <div className="font-mono text-[40px] leading-none font-semibold tracking-tight text-fg">
+                  {formatCurrency(totalGeneral)}
+                </div>
+              </div>
+
+              {hayInvalidos && (
+                <div className="mt-4 rounded-lg bg-err/10 ring-1 ring-inset ring-err/30 px-3.5 py-2.5 flex items-start gap-2.5">
+                  <span className="mt-0.5 font-mono text-err text-sm">!</span>
+                  <p className="text-[12px] text-err/90 leading-snug">
+                    Hay boletas con importes no válidos; esas quedan fuera del
+                    total hasta que las corrijas.
+                  </p>
+                </div>
+              )}
+            </>
+          ) : (
+            <p className="text-sm text-mut">
+              Cargá al menos una boleta para ver el total del agente.
+            </p>
+          )}
+
+          <p className="mt-5 pt-4 border-t border-line/60 text-[11px] text-faint leading-relaxed">
+            Herramienta local de verificación. Sin autenticación ni
+            persistencia; los datos no se almacenan.
+          </p>
+        </section>
       </div>
     </div>
   );
