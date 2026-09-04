@@ -287,7 +287,9 @@ function Index() {
                 <div className="flex items-center justify-between gap-4 mb-4">
                   <div className="flex items-center gap-2.5">
                     <span className="font-mono text-[10px] tracking-[0.16em] uppercase text-faint">
-                      Boleta {String(index + 1).padStart(2, "0")}
+                      {boleta.numero.trim() !== ""
+                        ? boleta.numero
+                        : `#${index + 1}`}
                     </span>
                     {activa && calc && (
                       <span className="font-mono text-[12px] text-mint">
@@ -298,7 +300,7 @@ function Index() {
                   <button
                     type="button"
                     onClick={() => removeBoleta(boleta.id)}
-                    aria-label={`Quitar boleta ${index + 1}`}
+                    aria-label={`Quitar ${boleta.numero.trim() !== "" ? boleta.numero : `#${index + 1}`}`}
                     className="print-hidden text-faint hover:text-err text-xs font-mono ring-1 ring-inset ring-white/10 hover:ring-err/40 rounded-md px-2 py-1 transition-colors"
                   >
                     ✕ Quitar
