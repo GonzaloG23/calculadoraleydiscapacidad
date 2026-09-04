@@ -107,26 +107,24 @@ function Index() {
   const [ley7991, setLey7991] = useState("");
   const [tratamiento, setTratamiento] = useState<Tratamiento>("dentro");
 
-  const remNum = parseAmount(remunerativo);
-  const noRemNum = parseAmount(noRemunerativo);
-  const leyNum = parseAmount(ley7991);
-
-  const isRemValid = !isNaN(remNum) || remunerativo === "";
-  const isNoRemValid = !isNaN(noRemNum) || noRemunerativo === "";
-  const isLeyValid = !isNaN(leyNum) || ley7991 === "";
+  const isRemValid = isValidAmount(remunerativo);
+  const isNoRemValid = isValidAmount(noRemunerativo);
+  const isLeyValid = isValidAmount(ley7991);
   const hasValidInputs = isRemValid && isNoRemValid && isLeyValid;
 
   const calculations: CalculationResult | null = useMemo(() => {
     if (!hasValidInputs) return null;
 
-    const remAjustado = remunerativo === "" ? 0 : remNum / 0.81;
-    const noRemAjustado = noRemunerativo === "" ? 0 : noRemNum - leyNum;
+    const remAjustado =
+      remunerativo === "" ? 0 : parseAmount(remunerativo) / 0.81;
+    const noRemAjustado =
+      noRemunerativo === "" ? 0 : parseAmount(noRemunerativo) - parseAmount(ley7991);
     const base = remAjustado + noRemAjustado;
     const factor = tratamiento === "dentro" ? 1.5 : 3;
     const resultado = base * factor;
 
     return { remAjustado, noRemAjustado, base, factor, resultado };
-  }, [remNum, noRemNum, leyNum, tratamiento, hasValidInputs, remunerativo, noRemunerativo, ley7991]);
+  }, [tratamiento, hasValidInputs, remunerativo, noRemunerativo, ley7991]);
 
   const hasNumericInput =
     remunerativo.trim() !== "" ||
