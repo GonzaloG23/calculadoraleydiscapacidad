@@ -8,7 +8,7 @@ Construir una calculadora web de una sola pantalla para auditores del Ministerio
 
 ## Funcionalidad
 1. **Entrada de datos**
-   - Nombre del agente (texto libre).
+   
    - Número de boletas (texto libre).
    - Valor remunerativo (numérico).
    - Valor no remunerativo (numérico).
