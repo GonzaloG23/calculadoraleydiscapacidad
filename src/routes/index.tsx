@@ -115,7 +115,7 @@ function Index() {
   return (
     <div className="min-h-screen bg-ink text-fg font-sans antialiased">
       <div
-        className="absolute inset-x-0 top-0 h-[440px] overflow-hidden pointer-events-none"
+        className="absolute inset-x-0 top-0 h-[440px] overflow-hidden pointer-events-none print-hidden"
         aria-hidden="true"
       >
         <div className="absolute -top-32 left-[6%] size-[520px] rounded-full bg-cyan/25 blur-[130px]" />

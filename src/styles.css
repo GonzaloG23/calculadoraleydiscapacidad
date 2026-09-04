@@ -189,4 +189,26 @@
   .print-hidden {
     display: none !important;
   }
+
+  /* Ensure panels print as light cards */
+  [class*="bg-panel"],
+  [class*="bg-ink/60"],
+  [class*="bg-ink/50"] {
+    background: white !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+  }
+
+  /* Force dark text on printed panels */
+  [class*="text-fg"],
+  [class*="text-cyan"],
+  [class*="text-mint"],
+  [class*="text-mut"],
+  [class*="text-faint"] {
+    color: black !important;
+  }
+
+  [class*="border-line"] {
+    border-color: #ccc !important;
+  }
 }
