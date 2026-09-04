@@ -78,11 +78,11 @@ function parseAmount(value: string): number {
 
   let normalized: string;
   if (lastComma > lastDot) {
-    const parts = trimmed.split(",");
-    normalized = parts[0].replace(/\./g, "") + (parts[1] ? "." + parts[1] : "");
+    const [whole, decimal = ""] = trimmed.split(",");
+    normalized = (whole ?? "").replace(/\./g, "") + (decimal ? "." + decimal : "");
   } else if (lastDot > lastComma) {
-    const parts = trimmed.split(".");
-    normalized = parts[0].replace(/,/g, "") + (parts[1] ? "." + parts[1] : "");
+    const [whole, decimal = ""] = trimmed.split(".");
+    normalized = (whole ?? "").replace(/,/g, "") + (decimal ? "." + decimal : "");
   } else {
     normalized = trimmed;
   }
