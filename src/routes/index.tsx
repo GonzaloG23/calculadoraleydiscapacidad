@@ -1,12 +1,5 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
-
-import { formatCurrency, isValidAmount, parseAmount } from "../lib/amount";
-import {
-  cargarPlanilla,
-  planillaTieneDatos,
-  type PlanillaValores,
-} from "../lib/planilla";
+import { createFileRoute } from "@tanstack/react-router";
+import { useMemo, useState } from "react";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -37,6 +30,62 @@ export const Route = createFileRoute("/")({
   }),
 });
 
+function formatCurrency(value: number): string {
+  return new Intl.NumberFormat("es-AR", {
+    style: "currency",
+    currency: "ARS",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(value);
+}
+
+function isValidAmount(value: string): boolean {
+  const trimmed = value.trim();
+  if (trimmed === "") return true;
+
+  const cleaned = trimmed.replace(/ /g, "").replace(/[^0-9.,]/g, "");
+  if (cleaned !== trimmed.replace(/ /g, "")) return false;
+
+  const lastComma = cleaned.lastIndexOf(",");
+  const lastDot = cleaned.lastIndexOf(".");
+
+  let normalized: string;
+  if (lastComma > lastDot) {
+    const [whole, decimal = ""] = cleaned.split(",");
+    if (cleaned.split(",").length > 2) return false;
+    normalized = (whole ?? "").replace(/\./g, "") + (decimal ? "." + decimal : "");
+  } else if (lastDot > lastComma) {
+    const [whole, decimal = ""] = cleaned.split(".");
+    if (cleaned.split(".").length > 2) return false;
+    normalized = (whole ?? "").replace(/,/g, "") + (decimal ? "." + decimal : "");
+  } else {
+    normalized = cleaned;
+  }
+
+  const num = parseFloat(normalized);
+  return !isNaN(num);
+}
+
+function parseAmount(value: string): number {
+  if (!isValidAmount(value) || value.trim() === "") return 0;
+
+  const trimmed = value.trim().replace(/ /g, "");
+  const lastComma = trimmed.lastIndexOf(",");
+  const lastDot = trimmed.lastIndexOf(".");
+
+  let normalized: string;
+  if (lastComma > lastDot) {
+    const [whole, decimal = ""] = trimmed.split(",");
+    normalized = (whole ?? "").replace(/\./g, "") + (decimal ? "." + decimal : "");
+  } else if (lastDot > lastComma) {
+    const [whole, decimal = ""] = trimmed.split(".");
+    normalized = (whole ?? "").replace(/,/g, "") + (decimal ? "." + decimal : "");
+  } else {
+    normalized = trimmed;
+  }
+
+  return parseFloat(normalized);
+}
 
 type Tratamiento = "dentro" | "fuera";
 
@@ -60,14 +109,14 @@ interface Boleta {
   tratamiento: Tratamiento;
 }
 
-function nuevaBoleta(id: string, planilla?: PlanillaValores | null): Boleta {
+function nuevaBoleta(id: string): Boleta {
   return {
     id,
     numero: "",
-    remunerativo: planilla?.remunerativo ?? "",
-    noRemunerativo: planilla?.noRemunerativo ?? "",
-    ley7991: planilla?.ley7991 ?? "",
-    tratamiento: planilla?.tratamiento ?? "dentro",
+    remunerativo: "",
+    noRemunerativo: "",
+    ley7991: "",
+    tratamiento: "dentro",
   };
 }
 
@@ -141,18 +190,6 @@ function siguienteId(prev: Boleta[]): string {
 
 function Index() {
   const [boletas, setBoletas] = useState<Boleta[]>(() => [nuevaBoleta("b1")]);
-  const [planilla, setPlanilla] = useState<PlanillaValores | null>(null);
-
-  useEffect(() => {
-    const stored = cargarPlanilla();
-    if (!planillaTieneDatos(stored)) return;
-    setPlanilla(stored);
-    setBoletas((prev) =>
-      prev.length === 1 && !tieneDatos(prev[0]!)
-        ? [nuevaBoleta(prev[0]!.id, stored)]
-        : prev,
-    );
-  }, []);
 
   const update = (id: string, patch: Partial<Boleta>) =>
     setBoletas((prev) =>
@@ -160,16 +197,16 @@ function Index() {
     );
 
   const addBoleta = () =>
-    setBoletas((prev) => [...prev, nuevaBoleta(siguienteId(prev), planilla)]);
+    setBoletas((prev) => [...prev, nuevaBoleta(siguienteId(prev))]);
 
   const removeBoleta = (id: string) =>
     setBoletas((prev) =>
       prev.length === 1
-        ? [nuevaBoleta(siguienteId(prev), planilla)]
+        ? [nuevaBoleta(siguienteId(prev))]
         : prev.filter((b) => b.id !== id),
     );
 
-  const handleReset = () => setBoletas([nuevaBoleta("b1", planilla)]);
+  const handleReset = () => setBoletas([nuevaBoleta("b1")]);
   const handlePrint = () => window.print();
 
   const resultados = useMemo(
@@ -226,18 +263,10 @@ function Index() {
             <p className="mt-1 text-faint text-xs text-pretty max-w-[56ch]">
               Autor: Lic. Gonzalo García
             </p>
-            <Link
-              to="/planilla"
-              className="print-hidden mt-3 inline-flex items-center gap-1.5 text-cyan hover:text-fg text-xs font-mono transition-colors"
-            >
-              {planilla
-                ? "Editar valores de la planilla oficial →"
-                : "Cargar valores de la planilla oficial →"}
-            </Link>
           </div>
           <div className="hidden sm:flex flex-col items-end gap-2 shrink-0">
             <span className="font-mono text-[10px] tracking-[0.18em] uppercase text-faint">
-              v1.1 · local
+              v1.0 · local
             </span>
             <span className="size-2 rounded-full bg-mint" />
           </div>
