@@ -141,6 +141,18 @@ function siguienteId(prev: Boleta[]): string {
 
 function Index() {
   const [boletas, setBoletas] = useState<Boleta[]>(() => [nuevaBoleta("b1")]);
+  const [planilla, setPlanilla] = useState<PlanillaValores | null>(null);
+
+  useEffect(() => {
+    const stored = cargarPlanilla();
+    if (!planillaTieneDatos(stored)) return;
+    setPlanilla(stored);
+    setBoletas((prev) =>
+      prev.length === 1 && !tieneDatos(prev[0]!)
+        ? [nuevaBoleta(prev[0]!.id, stored)]
+        : prev,
+    );
+  }, []);
 
   const update = (id: string, patch: Partial<Boleta>) =>
     setBoletas((prev) =>
@@ -148,16 +160,16 @@ function Index() {
     );
 
   const addBoleta = () =>
-    setBoletas((prev) => [...prev, nuevaBoleta(siguienteId(prev))]);
+    setBoletas((prev) => [...prev, nuevaBoleta(siguienteId(prev), planilla)]);
 
   const removeBoleta = (id: string) =>
     setBoletas((prev) =>
       prev.length === 1
-        ? [nuevaBoleta(siguienteId(prev))]
+        ? [nuevaBoleta(siguienteId(prev), planilla)]
         : prev.filter((b) => b.id !== id),
     );
 
-  const handleReset = () => setBoletas([nuevaBoleta("b1")]);
+  const handleReset = () => setBoletas([nuevaBoleta("b1", planilla)]);
   const handlePrint = () => window.print();
 
   const resultados = useMemo(
