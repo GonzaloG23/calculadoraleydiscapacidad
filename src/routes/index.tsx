@@ -60,14 +60,14 @@ interface Boleta {
   tratamiento: Tratamiento;
 }
 
-function nuevaBoleta(id: string): Boleta {
+function nuevaBoleta(id: string, planilla?: PlanillaValores | null): Boleta {
   return {
     id,
     numero: "",
-    remunerativo: "",
-    noRemunerativo: "",
-    ley7991: "",
-    tratamiento: "dentro",
+    remunerativo: planilla?.remunerativo ?? "",
+    noRemunerativo: planilla?.noRemunerativo ?? "",
+    ley7991: planilla?.ley7991 ?? "",
+    tratamiento: planilla?.tratamiento ?? "dentro",
   };
 }
 
@@ -141,6 +141,18 @@ function siguienteId(prev: Boleta[]): string {
 
 function Index() {
   const [boletas, setBoletas] = useState<Boleta[]>(() => [nuevaBoleta("b1")]);
+  const [planilla, setPlanilla] = useState<PlanillaValores | null>(null);
+
+  useEffect(() => {
+    const stored = cargarPlanilla();
+    if (!planillaTieneDatos(stored)) return;
+    setPlanilla(stored);
+    setBoletas((prev) =>
+      prev.length === 1 && !tieneDatos(prev[0]!)
+        ? [nuevaBoleta(prev[0]!.id, stored)]
+        : prev,
+    );
+  }, []);
 
   const update = (id: string, patch: Partial<Boleta>) =>
     setBoletas((prev) =>
@@ -148,16 +160,16 @@ function Index() {
     );
 
   const addBoleta = () =>
-    setBoletas((prev) => [...prev, nuevaBoleta(siguienteId(prev))]);
+    setBoletas((prev) => [...prev, nuevaBoleta(siguienteId(prev), planilla)]);
 
   const removeBoleta = (id: string) =>
     setBoletas((prev) =>
       prev.length === 1
-        ? [nuevaBoleta(siguienteId(prev))]
+        ? [nuevaBoleta(siguienteId(prev), planilla)]
         : prev.filter((b) => b.id !== id),
     );
 
-  const handleReset = () => setBoletas([nuevaBoleta("b1")]);
+  const handleReset = () => setBoletas([nuevaBoleta("b1", planilla)]);
   const handlePrint = () => window.print();
 
   const resultados = useMemo(
@@ -214,6 +226,14 @@ function Index() {
             <p className="mt-1 text-faint text-xs text-pretty max-w-[56ch]">
               Autor: Lic. Gonzalo García
             </p>
+            <Link
+              to="/planilla"
+              className="print-hidden mt-3 inline-flex items-center gap-1.5 text-cyan hover:text-fg text-xs font-mono transition-colors"
+            >
+              {planilla
+                ? "Editar valores de la planilla oficial →"
+                : "Cargar valores de la planilla oficial →"}
+            </Link>
           </div>
           <div className="hidden sm:flex flex-col items-end gap-2 shrink-0">
             <span className="font-mono text-[10px] tracking-[0.18em] uppercase text-faint">
