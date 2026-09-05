@@ -60,14 +60,14 @@ interface Boleta {
   tratamiento: Tratamiento;
 }
 
-function nuevaBoleta(id: string): Boleta {
+function nuevaBoleta(id: string, planilla?: PlanillaValores | null): Boleta {
   return {
     id,
     numero: "",
-    remunerativo: "",
-    noRemunerativo: "",
-    ley7991: "",
-    tratamiento: "dentro",
+    remunerativo: planilla?.remunerativo ?? "",
+    noRemunerativo: planilla?.noRemunerativo ?? "",
+    ley7991: planilla?.ley7991 ?? "",
+    tratamiento: planilla?.tratamiento ?? "dentro",
   };
 }
 
