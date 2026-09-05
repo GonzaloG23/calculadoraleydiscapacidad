@@ -226,6 +226,14 @@ function Index() {
             <p className="mt-1 text-faint text-xs text-pretty max-w-[56ch]">
               Autor: Lic. Gonzalo García
             </p>
+            <Link
+              to="/planilla"
+              className="print-hidden mt-3 inline-flex items-center gap-1.5 text-cyan hover:text-fg text-xs font-mono transition-colors"
+            >
+              {planilla
+                ? "Editar valores de la planilla oficial →"
+                : "Cargar valores de la planilla oficial →"}
+            </Link>
           </div>
           <div className="hidden sm:flex flex-col items-end gap-2 shrink-0">
             <span className="font-mono text-[10px] tracking-[0.18em] uppercase text-faint">
