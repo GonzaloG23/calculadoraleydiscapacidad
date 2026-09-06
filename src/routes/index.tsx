@@ -276,8 +276,47 @@ function Index() {
         : prev.filter((b) => b.id !== id),
     );
 
-  const handleReset = () => setBoletas([nuevaBoleta("b1")]);
+  const handleReset = () => {
+    setBoletas([nuevaBoleta("b1")]);
+    setPegado("");
+    setAvisoPegado(null);
+  };
   const handlePrint = () => window.print();
+
+  const aplicarPegado = () => {
+    if (pegado.trim() === "") {
+      setAvisoPegado("Pegá primero el texto copiado de la planilla.");
+      return;
+    }
+    const datos = interpretarPegado(pegado);
+    if (datos.encontrados === 0) {
+      setAvisoPegado("No encontré importes en el texto pegado.");
+      return;
+    }
+    setBoletas((prev) => {
+      const idx = prev.findIndex((b) => !tieneDatos(b));
+      const destino =
+        idx >= 0
+          ? prev
+          : [...prev, nuevaBoleta(siguienteId(prev))];
+      const pos = idx >= 0 ? idx : destino.length - 1;
+      return destino.map((b, i) =>
+        i === pos
+          ? {
+              ...b,
+              remunerativo: datos.remunerativo,
+              noRemunerativo: datos.noRemunerativo,
+              ley7991: datos.ley7991,
+            }
+          : b,
+      );
+    });
+    setAvisoPegado(
+      `Cargué ${datos.encontrados} de 3 importes. Revisá que sean correctos.`,
+    );
+    setPegado("");
+  };
+
 
   const resultados = useMemo(
     () => boletas.map((b) => ({ boleta: b, calc: calcular(b) })),
