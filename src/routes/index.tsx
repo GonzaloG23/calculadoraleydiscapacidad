@@ -275,38 +275,6 @@ function Index() {
           </div>
         </header>
 
-        <section className="print-hidden mb-4 bg-panel/70 backdrop-blur-xl ring-1 ring-white/10 rounded-2xl p-5 sm:p-6">
-          <h2 className="font-mono text-[11px] tracking-[0.16em] uppercase text-mut mb-2">
-            Pegar desde la planilla oficial
-          </h2>
-          <p className="text-mut text-sm mb-3 text-pretty max-w-[70ch]">
-            Copiá las filas del recibo en la página del Ministerio y pegalas
-            acá. Se completan solos el remunerativo, el no remunerativo y la
-            Ley 7991.
-          </p>
-          <textarea
-            value={pegado}
-            onChange={(e) => {
-              setPegado(e.target.value);
-              setAvisoPegado(null);
-            }}
-            rows={4}
-            placeholder={"Remunerativo    350.000,00\nNo remunerativo  120.500,00\nLey 7991          15.000,00"}
-            className="w-full bg-ink/50 border border-line rounded-lg px-3 py-2 text-sm font-mono text-fg placeholder:text-faint focus:outline-none focus:ring-2 focus:border-cyan/60 focus:ring-cyan/20 transition-colors"
-          />
-          <div className="mt-3 flex flex-wrap items-center gap-3">
-            <button
-              type="button"
-              onClick={aplicarPegado}
-              className="rounded-lg bg-cyan/15 ring-1 ring-inset ring-cyan/40 px-4 py-2 text-sm text-cyan hover:bg-cyan/25 transition-colors"
-            >
-              Cargar valores
-            </button>
-            {avisoPegado && (
-              <span className="text-xs text-mut font-mono">{avisoPegado}</span>
-            )}
-          </div>
-        </section>
 
         <div className="space-y-4">
           {resultados.map(({ boleta, calc }, index) => {
