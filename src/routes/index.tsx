@@ -188,78 +188,9 @@ function siguienteId(prev: Boleta[]): string {
   return `b${max + 1}`;
 }
 
-const NUM_RE = /-?\d{1,3}(?:[.\s]\d{3})*(?:,\d{1,2})?|-?\d+(?:[.,]\d{1,2})?/g;
-
-function normalizar(s: string): string {
-  return s
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "");
-}
-
-function numerosDe(linea: string): string[] {
-  return linea.match(NUM_RE) ?? [];
-}
-
-interface Pegado {
-  remunerativo: string;
-  noRemunerativo: string;
-  ley7991: string;
-  encontrados: number;
-}
-
-function interpretarPegado(texto: string): Pegado {
-  const out: Pegado = {
-    remunerativo: "",
-    noRemunerativo: "",
-    ley7991: "",
-    encontrados: 0,
-  };
-
-  const lineas = texto
-    .split(/\r?\n/)
-    .map((l) => l.trim())
-    .filter((l) => l !== "");
-
-  for (const linea of lineas) {
-    const n = normalizar(linea);
-    const nums = numerosDe(linea);
-    if (nums.length === 0) continue;
-    const valor = nums[nums.length - 1] ?? "";
-
-    if (n.includes("7991")) {
-      if (out.ley7991 === "") out.ley7991 = valor;
-    } else if (/no\s*-?\s*rem/.test(n)) {
-      if (out.noRemunerativo === "") out.noRemunerativo = valor;
-    } else if (n.includes("rem")) {
-      if (out.remunerativo === "") out.remunerativo = valor;
-    }
-  }
-
-  out.encontrados = [out.remunerativo, out.noRemunerativo, out.ley7991].filter(
-    (v) => v !== "",
-  ).length;
-
-  if (out.encontrados === 0) {
-    const todos = numerosDe(texto);
-    out.remunerativo = todos[0] ?? "";
-    out.noRemunerativo = todos[1] ?? "";
-    out.ley7991 = todos[2] ?? "";
-    out.encontrados = [
-      out.remunerativo,
-      out.noRemunerativo,
-      out.ley7991,
-    ].filter((v) => v !== "").length;
-  }
-
-  return out;
-}
 
 function Index() {
   const [boletas, setBoletas] = useState<Boleta[]>(() => [nuevaBoleta("b1")]);
-  const [pegado, setPegado] = useState("");
-  const [avisoPegado, setAvisoPegado] = useState<string | null>(null);
-
 
   const update = (id: string, patch: Partial<Boleta>) =>
     setBoletas((prev) =>
@@ -276,46 +207,9 @@ function Index() {
         : prev.filter((b) => b.id !== id),
     );
 
-  const handleReset = () => {
-    setBoletas([nuevaBoleta("b1")]);
-    setPegado("");
-    setAvisoPegado(null);
-  };
+  const handleReset = () => setBoletas([nuevaBoleta("b1")]);
   const handlePrint = () => window.print();
 
-  const aplicarPegado = () => {
-    if (pegado.trim() === "") {
-      setAvisoPegado("Pegá primero el texto copiado de la planilla.");
-      return;
-    }
-    const datos = interpretarPegado(pegado);
-    if (datos.encontrados === 0) {
-      setAvisoPegado("No encontré importes en el texto pegado.");
-      return;
-    }
-    setBoletas((prev) => {
-      const idx = prev.findIndex((b) => !tieneDatos(b));
-      const destino =
-        idx >= 0
-          ? prev
-          : [...prev, nuevaBoleta(siguienteId(prev))];
-      const pos = idx >= 0 ? idx : destino.length - 1;
-      return destino.map((b, i) =>
-        i === pos
-          ? {
-              ...b,
-              remunerativo: datos.remunerativo,
-              noRemunerativo: datos.noRemunerativo,
-              ley7991: datos.ley7991,
-            }
-          : b,
-      );
-    });
-    setAvisoPegado(
-      `Cargué ${datos.encontrados} de 3 importes. Revisá que sean correctos.`,
-    );
-    setPegado("");
-  };
 
 
   const resultados = useMemo(
@@ -381,38 +275,6 @@ function Index() {
           </div>
         </header>
 
-        <section className="print-hidden mb-4 bg-panel/70 backdrop-blur-xl ring-1 ring-white/10 rounded-2xl p-5 sm:p-6">
-          <h2 className="font-mono text-[11px] tracking-[0.16em] uppercase text-mut mb-2">
-            Pegar desde la planilla oficial
-          </h2>
-          <p className="text-mut text-sm mb-3 text-pretty max-w-[70ch]">
-            Copiá las filas del recibo en la página del Ministerio y pegalas
-            acá. Se completan solos el remunerativo, el no remunerativo y la
-            Ley 7991.
-          </p>
-          <textarea
-            value={pegado}
-            onChange={(e) => {
-              setPegado(e.target.value);
-              setAvisoPegado(null);
-            }}
-            rows={4}
-            placeholder={"Remunerativo    350.000,00\nNo remunerativo  120.500,00\nLey 7991          15.000,00"}
-            className="w-full bg-ink/50 border border-line rounded-lg px-3 py-2 text-sm font-mono text-fg placeholder:text-faint focus:outline-none focus:ring-2 focus:border-cyan/60 focus:ring-cyan/20 transition-colors"
-          />
-          <div className="mt-3 flex flex-wrap items-center gap-3">
-            <button
-              type="button"
-              onClick={aplicarPegado}
-              className="rounded-lg bg-cyan/15 ring-1 ring-inset ring-cyan/40 px-4 py-2 text-sm text-cyan hover:bg-cyan/25 transition-colors"
-            >
-              Cargar valores
-            </button>
-            {avisoPegado && (
-              <span className="text-xs text-mut font-mono">{avisoPegado}</span>
-            )}
-          </div>
-        </section>
 
         <div className="space-y-4">
           {resultados.map(({ boleta, calc }, index) => {
