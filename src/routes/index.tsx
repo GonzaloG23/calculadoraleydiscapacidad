@@ -128,21 +128,25 @@ function nuevaBoleta(id: string): Boleta {
 }
 
 function calcular(b: Boleta): CalculationResult | null {
+  const rem = b.remunerativo ?? "";
+  const noRem = b.noRemunerativo ?? "";
+  const ley = b.ley7991 ?? "";
+  const diasStr = b.dias ?? "";
+
   if (
-    !isValidAmount(b.remunerativo) ||
-    !isValidAmount(b.noRemunerativo) ||
-    !isValidAmount(b.ley7991) ||
-    (b.menos90 && !isValidAmount(b.dias))
+    !isValidAmount(rem) ||
+    !isValidAmount(noRem) ||
+    !isValidAmount(ley) ||
+    (b.menos90 && !isValidAmount(diasStr))
   ) {
     return null;
   }
 
-  const remunerativo =
-    b.remunerativo.trim() === "" ? 0 : parseAmount(b.remunerativo);
-  const noRemunerativo =
-    b.noRemunerativo.trim() === "" ? 0 : parseAmount(b.noRemunerativo);
-  const ley7991 = b.ley7991.trim() === "" ? 0 : parseAmount(b.ley7991);
-  const dias = b.dias.trim() === "" ? 0 : parseAmount(b.dias);
+  const remunerativo = rem.trim() === "" ? 0 : parseAmount(rem);
+  const noRemunerativo = noRem.trim() === "" ? 0 : parseAmount(noRem);
+  const ley7991 = ley.trim() === "" ? 0 : parseAmount(ley);
+  const dias = diasStr.trim() === "" ? 0 : parseAmount(diasStr);
+
 
   const factor = b.tratamiento === "dentro" ? 1.5 : 3;
   const usaAjuste = ley7991 !== 0;
@@ -194,10 +198,10 @@ function calcular(b: Boleta): CalculationResult | null {
 
 function tieneDatos(b: Boleta): boolean {
   return (
-    b.remunerativo.trim() !== "" ||
-    b.noRemunerativo.trim() !== "" ||
-    b.ley7991.trim() !== "" ||
-    (b.menos90 && b.dias.trim() !== "")
+    (b.remunerativo ?? "").trim() !== "" ||
+    (b.noRemunerativo ?? "").trim() !== "" ||
+    (b.ley7991 ?? "").trim() !== "" ||
+    (b.menos90 && (b.dias ?? "").trim() !== "")
   );
 }
 
@@ -307,7 +311,7 @@ function Index() {
             const remOk = isValidAmount(boleta.remunerativo);
             const noRemOk = isValidAmount(boleta.noRemunerativo);
             const leyOk = isValidAmount(boleta.ley7991);
-            const diasOk = isValidAmount(boleta.dias);
+            const diasOk = isValidAmount(boleta.dias ?? "");
             const activa = tieneDatos(boleta);
 
             return (
@@ -495,7 +499,7 @@ function Index() {
                           id={`dias-${boleta.id}`}
                           type="text"
                           inputMode="decimal"
-                          value={boleta.dias}
+                          value={boleta.dias ?? ""}
                           onChange={(e) =>
                             update(boleta.id, { dias: e.target.value })
                           }
