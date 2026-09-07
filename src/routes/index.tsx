@@ -448,6 +448,62 @@ function Index() {
                         ))}
                       </div>
                     </div>
+
+                    <div className="print-hidden">
+                      <button
+                        type="button"
+                        role="switch"
+                        aria-checked={boleta.menos90}
+                        onClick={() =>
+                          update(boleta.id, {
+                            menos90: !boleta.menos90,
+                            ...(boleta.menos90 ? { dias: "" } : {}),
+                          })
+                        }
+                        className={`w-full flex items-center justify-between gap-3 rounded-lg border px-3 py-2 text-sm font-semibold transition-colors ${
+                          boleta.menos90
+                            ? "bg-mint/10 text-mint border-mint/40"
+                            : "bg-ink/50 text-mut border-line hover:text-fg"
+                        }`}
+                      >
+                        <span>Menos de 90 días trabajados</span>
+                        <span
+                          className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${
+                            boleta.menos90 ? "bg-mint/40" : "bg-line"
+                          }`}
+                        >
+                          <span
+                            className={`inline-block size-3.5 rounded-full bg-fg transition-transform ${
+                              boleta.menos90
+                                ? "translate-x-[18px]"
+                                : "translate-x-[3px]"
+                            }`}
+                          />
+                        </span>
+                      </button>
+                    </div>
+
+                    {boleta.menos90 && (
+                      <div>
+                        <label
+                          htmlFor={`dias-${boleta.id}`}
+                          className="block text-[12px] font-medium text-fg mb-1.5"
+                        >
+                          Días trabajados
+                        </label>
+                        <input
+                          id={`dias-${boleta.id}`}
+                          type="text"
+                          inputMode="decimal"
+                          value={boleta.dias}
+                          onChange={(e) =>
+                            update(boleta.id, { dias: e.target.value })
+                          }
+                          placeholder="Ej. 45"
+                          className={`${inputBase} ${diasOk ? inputOk : inputErr}`}
+                        />
+                      </div>
+                    )}
                   </div>
 
                   <div className="rounded-xl bg-ink/50 ring-1 ring-inset ring-white/10 p-4">
