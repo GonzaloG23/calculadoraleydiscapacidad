@@ -198,10 +198,10 @@ function calcular(b: Boleta): CalculationResult | null {
 
 function tieneDatos(b: Boleta): boolean {
   return (
-    b.remunerativo.trim() !== "" ||
-    b.noRemunerativo.trim() !== "" ||
-    b.ley7991.trim() !== "" ||
-    (b.menos90 && b.dias.trim() !== "")
+    (b.remunerativo ?? "").trim() !== "" ||
+    (b.noRemunerativo ?? "").trim() !== "" ||
+    (b.ley7991 ?? "").trim() !== "" ||
+    (b.menos90 && (b.dias ?? "").trim() !== "")
   );
 }
 
