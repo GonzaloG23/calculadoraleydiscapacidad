@@ -307,6 +307,7 @@ function Index() {
             const remOk = isValidAmount(boleta.remunerativo);
             const noRemOk = isValidAmount(boleta.noRemunerativo);
             const leyOk = isValidAmount(boleta.ley7991);
+            const diasOk = isValidAmount(boleta.dias);
             const activa = tieneDatos(boleta);
 
             return (
