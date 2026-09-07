@@ -91,6 +91,9 @@ type Tratamiento = "dentro" | "fuera";
 
 interface CalculationResult {
   usaAjuste: boolean;
+  menos90: boolean;
+  dias: number;
+  valorDiario: number;
   remunerativo: number;
   noRemunerativo: number;
   remAjustado: number;
@@ -107,6 +110,8 @@ interface Boleta {
   noRemunerativo: string;
   ley7991: string;
   tratamiento: Tratamiento;
+  menos90: boolean;
+  dias: string;
 }
 
 function nuevaBoleta(id: string): Boleta {
@@ -117,6 +122,8 @@ function nuevaBoleta(id: string): Boleta {
     noRemunerativo: "",
     ley7991: "",
     tratamiento: "dentro",
+    menos90: false,
+    dias: "",
   };
 }
 
