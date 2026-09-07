@@ -548,17 +548,57 @@ function Index() {
                           <span className="text-mut">Suma (base)</span>
                           <span>{formatCurrency(calc.base)}</span>
                         </div>
-                        <div className="flex items-center justify-between pt-2">
-                          <span className="text-mut">
-                            Factor ×{calc.factor.toFixed(1).replace(".", ",")}{" "}
-                            <span className="text-cyan">
-                              ({boleta.tratamiento})
+                        {calc.menos90 ? (
+                          <>
+                            <div className="flex items-center justify-between py-1.5 border-b border-line/60">
+                              <span className="text-mut">Base ÷ 30</span>
+                              <span>{formatCurrency(calc.valorDiario)}</span>
+                            </div>
+                            <div className="flex items-center justify-between py-1.5 border-b border-line/60">
+                              <span className="text-mut">
+                                × días trabajados ({calc.dias})
+                              </span>
+                              <span>
+                                {formatCurrency(calc.valorDiario * calc.dias)}
+                              </span>
+                            </div>
+                            {boleta.tratamiento === "dentro" && (
+                              <div className="flex items-center justify-between py-1.5 border-b border-line/60">
+                                <span className="text-mut">
+                                  ÷ 2{" "}
+                                  <span className="text-cyan">
+                                    (dentro de provincia)
+                                  </span>
+                                </span>
+                                <span>
+                                  {formatCurrency(calc.resultado)}
+                                </span>
+                              </div>
+                            )}
+                            <div className="flex items-center justify-between pt-2">
+                              <span className="text-mut">
+                                Resultado{" "}
+                                <span className="text-mint">(&lt;90 días)</span>
+                              </span>
+                              <span className="text-fg text-base font-semibold">
+                                {formatCurrency(calc.resultado)}
+                              </span>
+                            </div>
+                          </>
+                        ) : (
+                          <div className="flex items-center justify-between pt-2">
+                            <span className="text-mut">
+                              Factor ×
+                              {calc.factor.toFixed(1).replace(".", ",")}{" "}
+                              <span className="text-cyan">
+                                ({boleta.tratamiento})
+                              </span>
                             </span>
-                          </span>
-                          <span className="text-fg text-base font-semibold">
-                            {formatCurrency(calc.resultado)}
-                          </span>
-                        </div>
+                            <span className="text-fg text-base font-semibold">
+                              {formatCurrency(calc.resultado)}
+                            </span>
+                          </div>
+                        )}
                       </div>
                     ) : activa && !calc ? (
                       <p className="text-[12px] text-err/90 leading-snug">
