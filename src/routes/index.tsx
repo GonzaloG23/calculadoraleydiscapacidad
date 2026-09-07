@@ -131,7 +131,8 @@ function calcular(b: Boleta): CalculationResult | null {
   if (
     !isValidAmount(b.remunerativo) ||
     !isValidAmount(b.noRemunerativo) ||
-    !isValidAmount(b.ley7991)
+    !isValidAmount(b.ley7991) ||
+    (b.menos90 && !isValidAmount(b.dias))
   ) {
     return null;
   }
@@ -141,33 +142,50 @@ function calcular(b: Boleta): CalculationResult | null {
   const noRemunerativo =
     b.noRemunerativo.trim() === "" ? 0 : parseAmount(b.noRemunerativo);
   const ley7991 = b.ley7991.trim() === "" ? 0 : parseAmount(b.ley7991);
+  const dias = b.dias.trim() === "" ? 0 : parseAmount(b.dias);
 
   const factor = b.tratamiento === "dentro" ? 1.5 : 3;
   const usaAjuste = ley7991 !== 0;
 
+  let remAjustado = 0;
+  let noRemAjustado = 0;
+  let base: number;
   if (usaAjuste) {
-    const remAjustado = remunerativo / 0.81;
-    const noRemAjustado = noRemunerativo - ley7991;
-    const base = remAjustado + noRemAjustado;
+    remAjustado = remunerativo / 0.81;
+    noRemAjustado = noRemunerativo - ley7991;
+    base = remAjustado + noRemAjustado;
+  } else {
+    base = remunerativo + noRemunerativo;
+  }
+
+  if (b.menos90) {
+    const valorDiario = base / 30;
+    const bruto = valorDiario * dias;
+    const resultado = b.tratamiento === "dentro" ? bruto / 2 : bruto;
     return {
       usaAjuste,
+      menos90: true,
+      dias,
+      valorDiario,
       remunerativo,
       noRemunerativo,
       remAjustado,
       noRemAjustado,
       base,
       factor,
-      resultado: base * factor,
+      resultado,
     };
   }
 
-  const base = remunerativo + noRemunerativo;
   return {
     usaAjuste,
+    menos90: false,
+    dias,
+    valorDiario: 0,
     remunerativo,
     noRemunerativo,
-    remAjustado: 0,
-    noRemAjustado: 0,
+    remAjustado,
+    noRemAjustado,
     base,
     factor,
     resultado: base * factor,
