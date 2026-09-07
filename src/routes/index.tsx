@@ -311,7 +311,7 @@ function Index() {
             const remOk = isValidAmount(boleta.remunerativo);
             const noRemOk = isValidAmount(boleta.noRemunerativo);
             const leyOk = isValidAmount(boleta.ley7991);
-            const diasOk = isValidAmount(boleta.dias);
+            const diasOk = isValidAmount(boleta.dias ?? "");
             const activa = tieneDatos(boleta);
 
             return (
@@ -499,7 +499,7 @@ function Index() {
                           id={`dias-${boleta.id}`}
                           type="text"
                           inputMode="decimal"
-                          value={boleta.dias}
+                          value={boleta.dias ?? ""}
                           onChange={(e) =>
                             update(boleta.id, { dias: e.target.value })
                           }
