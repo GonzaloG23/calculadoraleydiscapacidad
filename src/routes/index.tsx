@@ -91,6 +91,9 @@ type Tratamiento = "dentro" | "fuera";
 
 interface CalculationResult {
   usaAjuste: boolean;
+  menos90: boolean;
+  dias: number;
+  valorDiario: number;
   remunerativo: number;
   noRemunerativo: number;
   remAjustado: number;
@@ -107,6 +110,8 @@ interface Boleta {
   noRemunerativo: string;
   ley7991: string;
   tratamiento: Tratamiento;
+  menos90: boolean;
+  dias: string;
 }
 
 function nuevaBoleta(id: string): Boleta {
@@ -117,6 +122,8 @@ function nuevaBoleta(id: string): Boleta {
     noRemunerativo: "",
     ley7991: "",
     tratamiento: "dentro",
+    menos90: false,
+    dias: "",
   };
 }
 
@@ -124,7 +131,8 @@ function calcular(b: Boleta): CalculationResult | null {
   if (
     !isValidAmount(b.remunerativo) ||
     !isValidAmount(b.noRemunerativo) ||
-    !isValidAmount(b.ley7991)
+    !isValidAmount(b.ley7991) ||
+    (b.menos90 && !isValidAmount(b.dias))
   ) {
     return null;
   }
@@ -134,33 +142,50 @@ function calcular(b: Boleta): CalculationResult | null {
   const noRemunerativo =
     b.noRemunerativo.trim() === "" ? 0 : parseAmount(b.noRemunerativo);
   const ley7991 = b.ley7991.trim() === "" ? 0 : parseAmount(b.ley7991);
+  const dias = b.dias.trim() === "" ? 0 : parseAmount(b.dias);
 
   const factor = b.tratamiento === "dentro" ? 1.5 : 3;
   const usaAjuste = ley7991 !== 0;
 
+  let remAjustado = 0;
+  let noRemAjustado = 0;
+  let base: number;
   if (usaAjuste) {
-    const remAjustado = remunerativo / 0.81;
-    const noRemAjustado = noRemunerativo - ley7991;
-    const base = remAjustado + noRemAjustado;
+    remAjustado = remunerativo / 0.81;
+    noRemAjustado = noRemunerativo - ley7991;
+    base = remAjustado + noRemAjustado;
+  } else {
+    base = remunerativo + noRemunerativo;
+  }
+
+  if (b.menos90) {
+    const valorDiario = base / 30;
+    const bruto = valorDiario * dias;
+    const resultado = b.tratamiento === "dentro" ? bruto / 2 : bruto;
     return {
       usaAjuste,
+      menos90: true,
+      dias,
+      valorDiario,
       remunerativo,
       noRemunerativo,
       remAjustado,
       noRemAjustado,
       base,
       factor,
-      resultado: base * factor,
+      resultado,
     };
   }
 
-  const base = remunerativo + noRemunerativo;
   return {
     usaAjuste,
+    menos90: false,
+    dias,
+    valorDiario: 0,
     remunerativo,
     noRemunerativo,
-    remAjustado: 0,
-    noRemAjustado: 0,
+    remAjustado,
+    noRemAjustado,
     base,
     factor,
     resultado: base * factor,
@@ -171,7 +196,8 @@ function tieneDatos(b: Boleta): boolean {
   return (
     b.remunerativo.trim() !== "" ||
     b.noRemunerativo.trim() !== "" ||
-    b.ley7991.trim() !== ""
+    b.ley7991.trim() !== "" ||
+    (b.menos90 && b.dias.trim() !== "")
   );
 }
 
@@ -281,6 +307,7 @@ function Index() {
             const remOk = isValidAmount(boleta.remunerativo);
             const noRemOk = isValidAmount(boleta.noRemunerativo);
             const leyOk = isValidAmount(boleta.ley7991);
+            const diasOk = isValidAmount(boleta.dias);
             const activa = tieneDatos(boleta);
 
             return (
@@ -421,6 +448,62 @@ function Index() {
                         ))}
                       </div>
                     </div>
+
+                    <div className="print-hidden">
+                      <button
+                        type="button"
+                        role="switch"
+                        aria-checked={boleta.menos90}
+                        onClick={() =>
+                          update(boleta.id, {
+                            menos90: !boleta.menos90,
+                            ...(boleta.menos90 ? { dias: "" } : {}),
+                          })
+                        }
+                        className={`w-full flex items-center justify-between gap-3 rounded-lg border px-3 py-2 text-sm font-semibold transition-colors ${
+                          boleta.menos90
+                            ? "bg-mint/10 text-mint border-mint/40"
+                            : "bg-ink/50 text-mut border-line hover:text-fg"
+                        }`}
+                      >
+                        <span>Menos de 90 días trabajados</span>
+                        <span
+                          className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${
+                            boleta.menos90 ? "bg-mint/40" : "bg-line"
+                          }`}
+                        >
+                          <span
+                            className={`inline-block size-3.5 rounded-full bg-fg transition-transform ${
+                              boleta.menos90
+                                ? "translate-x-[18px]"
+                                : "translate-x-[3px]"
+                            }`}
+                          />
+                        </span>
+                      </button>
+                    </div>
+
+                    {boleta.menos90 && (
+                      <div>
+                        <label
+                          htmlFor={`dias-${boleta.id}`}
+                          className="block text-[12px] font-medium text-fg mb-1.5"
+                        >
+                          Días trabajados
+                        </label>
+                        <input
+                          id={`dias-${boleta.id}`}
+                          type="text"
+                          inputMode="decimal"
+                          value={boleta.dias}
+                          onChange={(e) =>
+                            update(boleta.id, { dias: e.target.value })
+                          }
+                          placeholder="Ej. 45"
+                          className={`${inputBase} ${diasOk ? inputOk : inputErr}`}
+                        />
+                      </div>
+                    )}
                   </div>
 
                   <div className="rounded-xl bg-ink/50 ring-1 ring-inset ring-white/10 p-4">
@@ -465,17 +548,57 @@ function Index() {
                           <span className="text-mut">Suma (base)</span>
                           <span>{formatCurrency(calc.base)}</span>
                         </div>
-                        <div className="flex items-center justify-between pt-2">
-                          <span className="text-mut">
-                            Factor ×{calc.factor.toFixed(1).replace(".", ",")}{" "}
-                            <span className="text-cyan">
-                              ({boleta.tratamiento})
+                        {calc.menos90 ? (
+                          <>
+                            <div className="flex items-center justify-between py-1.5 border-b border-line/60">
+                              <span className="text-mut">Base ÷ 30</span>
+                              <span>{formatCurrency(calc.valorDiario)}</span>
+                            </div>
+                            <div className="flex items-center justify-between py-1.5 border-b border-line/60">
+                              <span className="text-mut">
+                                × días trabajados ({calc.dias})
+                              </span>
+                              <span>
+                                {formatCurrency(calc.valorDiario * calc.dias)}
+                              </span>
+                            </div>
+                            {boleta.tratamiento === "dentro" && (
+                              <div className="flex items-center justify-between py-1.5 border-b border-line/60">
+                                <span className="text-mut">
+                                  ÷ 2{" "}
+                                  <span className="text-cyan">
+                                    (dentro de provincia)
+                                  </span>
+                                </span>
+                                <span>
+                                  {formatCurrency(calc.resultado)}
+                                </span>
+                              </div>
+                            )}
+                            <div className="flex items-center justify-between pt-2">
+                              <span className="text-mut">
+                                Resultado{" "}
+                                <span className="text-mint">(&lt;90 días)</span>
+                              </span>
+                              <span className="text-fg text-base font-semibold">
+                                {formatCurrency(calc.resultado)}
+                              </span>
+                            </div>
+                          </>
+                        ) : (
+                          <div className="flex items-center justify-between pt-2">
+                            <span className="text-mut">
+                              Factor ×
+                              {calc.factor.toFixed(1).replace(".", ",")}{" "}
+                              <span className="text-cyan">
+                                ({boleta.tratamiento})
+                              </span>
                             </span>
-                          </span>
-                          <span className="text-fg text-base font-semibold">
-                            {formatCurrency(calc.resultado)}
-                          </span>
-                        </div>
+                            <span className="text-fg text-base font-semibold">
+                              {formatCurrency(calc.resultado)}
+                            </span>
+                          </div>
+                        )}
                       </div>
                     ) : activa && !calc ? (
                       <p className="text-[12px] text-err/90 leading-snug">
