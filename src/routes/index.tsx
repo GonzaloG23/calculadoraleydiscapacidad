@@ -235,7 +235,11 @@ function tieneDatos(b: Boleta): boolean {
     (b.remunerativo ?? "").trim() !== "" ||
     (b.noRemunerativo ?? "").trim() !== "" ||
     (b.ley7991 ?? "").trim() !== "" ||
-    (b.menos90 && (b.dias ?? "").trim() !== "")
+    (b.menos90 && (b.dias ?? "").trim() !== "") ||
+    (b.tieneAdicional &&
+      ((b.adicionalRem ?? "").trim() !== "" ||
+        (b.adicionalNoRem ?? "").trim() !== "" ||
+        (b.adicionalLey ?? "").trim() !== ""))
   );
 }
 
