@@ -144,19 +144,33 @@ function calcular(b: Boleta): CalculationResult | null {
   const noRem = b.noRemunerativo ?? "";
   const ley = b.ley7991 ?? "";
   const diasStr = b.dias ?? "";
+  const adRem = b.adicionalRem ?? "";
+  const adNoRem = b.adicionalNoRem ?? "";
+  const adLey = b.adicionalLey ?? "";
 
   if (
     !isValidAmount(rem) ||
     !isValidAmount(noRem) ||
     !isValidAmount(ley) ||
-    (b.menos90 && !isValidAmount(diasStr))
+    (b.menos90 && !isValidAmount(diasStr)) ||
+    (b.tieneAdicional &&
+      (!isValidAmount(adRem) ||
+        !isValidAmount(adNoRem) ||
+        !isValidAmount(adLey)))
   ) {
     return null;
   }
 
-  const remunerativo = rem.trim() === "" ? 0 : parseAmount(rem);
-  const noRemunerativo = noRem.trim() === "" ? 0 : parseAmount(noRem);
-  const ley7991 = ley.trim() === "" ? 0 : parseAmount(ley);
+  const adicionalRem = adRem.trim() === "" ? 0 : parseAmount(adRem);
+  const adicionalNoRem = adNoRem.trim() === "" ? 0 : parseAmount(adNoRem);
+  const adicionalLey = adLey.trim() === "" ? 0 : parseAmount(adLey);
+  const sumRem = b.tieneAdicional ? adicionalRem : 0;
+  const sumNoRem = b.tieneAdicional ? adicionalNoRem : 0;
+  const sumLey = b.tieneAdicional ? adicionalLey : 0;
+  const remunerativo = (rem.trim() === "" ? 0 : parseAmount(rem)) + sumRem;
+  const noRemunerativo =
+    (noRem.trim() === "" ? 0 : parseAmount(noRem)) + sumNoRem;
+  const ley7991 = (ley.trim() === "" ? 0 : parseAmount(ley)) + sumLey;
   const dias = diasStr.trim() === "" ? 0 : parseAmount(diasStr);
 
 
