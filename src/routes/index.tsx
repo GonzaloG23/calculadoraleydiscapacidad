@@ -665,6 +665,38 @@ function Index() {
                   <div className="rounded-xl bg-ink/50 ring-1 ring-inset ring-white/10 p-4">
                     {calc && activa ? (
                       <div className="space-y-1 font-mono text-[13px]">
+                        {calc.tieneAdicional && (
+                          <>
+                            <div className="flex items-center justify-between py-1.5 border-b border-line/60">
+                              <span className="text-mut">
+                                Remunerativo + adicional
+                              </span>
+                              <span>{formatCurrency(calc.remunerativo)}</span>
+                            </div>
+                            <div className="flex items-center justify-between py-1.5 border-b border-line/60">
+                              <span className="text-mut">
+                                No remunerativo + adicional
+                              </span>
+                              <span>
+                                {formatCurrency(calc.noRemunerativo)}
+                              </span>
+                            </div>
+                            <div className="flex items-center justify-between py-1.5 border-b border-line/60">
+                              <span className="text-mut">
+                                Ley 7991 + adicional
+                              </span>
+                              <span>
+                                {formatCurrency(
+                                  calc.usaAjuste
+                                    ? calc.remAjustado * 0 +
+                                        (calc.noRemunerativo -
+                                          calc.noRemAjustado)
+                                    : 0,
+                                )}
+                              </span>
+                            </div>
+                          </>
+                        )}
                         {calc.usaAjuste ? (
                           <>
                             <div className="flex items-center justify-between py-1.5 border-b border-line/60">
