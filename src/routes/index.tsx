@@ -100,6 +100,7 @@ interface CalculationResult {
   adicionalLey: number;
   remunerativo: number;
   noRemunerativo: number;
+  ley7991: number;
   remAjustado: number;
   noRemAjustado: number;
   base: number;
@@ -685,15 +686,7 @@ function Index() {
                               <span className="text-mut">
                                 Ley 7991 + adicional
                               </span>
-                              <span>
-                                {formatCurrency(
-                                  calc.usaAjuste
-                                    ? calc.remAjustado * 0 +
-                                        (calc.noRemunerativo -
-                                          calc.noRemAjustado)
-                                    : 0,
-                                )}
-                              </span>
+                              <span>{formatCurrency(calc.ley7991)}</span>
                             </div>
                           </>
                         )}
