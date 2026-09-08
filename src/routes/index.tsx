@@ -350,6 +350,9 @@ function Index() {
             const noRemOk = isValidAmount(boleta.noRemunerativo);
             const leyOk = isValidAmount(boleta.ley7991);
             const diasOk = isValidAmount(boleta.dias ?? "");
+            const adRemOk = isValidAmount(boleta.adicionalRem ?? "");
+            const adNoRemOk = isValidAmount(boleta.adicionalNoRem ?? "");
+            const adLeyOk = isValidAmount(boleta.adicionalLey ?? "");
             const activa = tieneDatos(boleta);
 
             return (
