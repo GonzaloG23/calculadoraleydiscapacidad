@@ -94,8 +94,13 @@ interface CalculationResult {
   menos90: boolean;
   dias: number;
   valorDiario: number;
+  tieneAdicional: boolean;
+  adicionalRem: number;
+  adicionalNoRem: number;
+  adicionalLey: number;
   remunerativo: number;
   noRemunerativo: number;
+  ley7991: number;
   remAjustado: number;
   noRemAjustado: number;
   base: number;
@@ -112,6 +117,10 @@ interface Boleta {
   tratamiento: Tratamiento;
   menos90: boolean;
   dias: string;
+  tieneAdicional: boolean;
+  adicionalRem: string;
+  adicionalNoRem: string;
+  adicionalLey: string;
 }
 
 function nuevaBoleta(id: string): Boleta {
@@ -124,6 +133,10 @@ function nuevaBoleta(id: string): Boleta {
     tratamiento: "dentro",
     menos90: false,
     dias: "",
+    tieneAdicional: false,
+    adicionalRem: "",
+    adicionalNoRem: "",
+    adicionalLey: "",
   };
 }
 
@@ -132,19 +145,33 @@ function calcular(b: Boleta): CalculationResult | null {
   const noRem = b.noRemunerativo ?? "";
   const ley = b.ley7991 ?? "";
   const diasStr = b.dias ?? "";
+  const adRem = b.adicionalRem ?? "";
+  const adNoRem = b.adicionalNoRem ?? "";
+  const adLey = b.adicionalLey ?? "";
 
   if (
     !isValidAmount(rem) ||
     !isValidAmount(noRem) ||
     !isValidAmount(ley) ||
-    (b.menos90 && !isValidAmount(diasStr))
+    (b.menos90 && !isValidAmount(diasStr)) ||
+    (b.tieneAdicional &&
+      (!isValidAmount(adRem) ||
+        !isValidAmount(adNoRem) ||
+        !isValidAmount(adLey)))
   ) {
     return null;
   }
 
-  const remunerativo = rem.trim() === "" ? 0 : parseAmount(rem);
-  const noRemunerativo = noRem.trim() === "" ? 0 : parseAmount(noRem);
-  const ley7991 = ley.trim() === "" ? 0 : parseAmount(ley);
+  const adicionalRem = adRem.trim() === "" ? 0 : parseAmount(adRem);
+  const adicionalNoRem = adNoRem.trim() === "" ? 0 : parseAmount(adNoRem);
+  const adicionalLey = adLey.trim() === "" ? 0 : parseAmount(adLey);
+  const sumRem = b.tieneAdicional ? adicionalRem : 0;
+  const sumNoRem = b.tieneAdicional ? adicionalNoRem : 0;
+  const sumLey = b.tieneAdicional ? adicionalLey : 0;
+  const remunerativo = (rem.trim() === "" ? 0 : parseAmount(rem)) + sumRem;
+  const noRemunerativo =
+    (noRem.trim() === "" ? 0 : parseAmount(noRem)) + sumNoRem;
+  const ley7991 = (ley.trim() === "" ? 0 : parseAmount(ley)) + sumLey;
   const dias = diasStr.trim() === "" ? 0 : parseAmount(diasStr);
 
 
@@ -171,8 +198,13 @@ function calcular(b: Boleta): CalculationResult | null {
       menos90: true,
       dias,
       valorDiario,
+      tieneAdicional: b.tieneAdicional,
+      adicionalRem,
+      adicionalNoRem,
+      adicionalLey,
       remunerativo,
       noRemunerativo,
+      ley7991,
       remAjustado,
       noRemAjustado,
       base,
@@ -186,8 +218,13 @@ function calcular(b: Boleta): CalculationResult | null {
     menos90: false,
     dias,
     valorDiario: 0,
+    tieneAdicional: b.tieneAdicional,
+    adicionalRem,
+    adicionalNoRem,
+    adicionalLey,
     remunerativo,
     noRemunerativo,
+    ley7991,
     remAjustado,
     noRemAjustado,
     base,
@@ -201,7 +238,11 @@ function tieneDatos(b: Boleta): boolean {
     (b.remunerativo ?? "").trim() !== "" ||
     (b.noRemunerativo ?? "").trim() !== "" ||
     (b.ley7991 ?? "").trim() !== "" ||
-    (b.menos90 && (b.dias ?? "").trim() !== "")
+    (b.menos90 && (b.dias ?? "").trim() !== "") ||
+    (b.tieneAdicional &&
+      ((b.adicionalRem ?? "").trim() !== "" ||
+        (b.adicionalNoRem ?? "").trim() !== "" ||
+        (b.adicionalLey ?? "").trim() !== ""))
   );
 }
 
@@ -312,6 +353,9 @@ function Index() {
             const noRemOk = isValidAmount(boleta.noRemunerativo);
             const leyOk = isValidAmount(boleta.ley7991);
             const diasOk = isValidAmount(boleta.dias ?? "");
+            const adRemOk = isValidAmount(boleta.adicionalRem ?? "");
+            const adNoRemOk = isValidAmount(boleta.adicionalNoRem ?? "");
+            const adLeyOk = isValidAmount(boleta.adicionalLey ?? "");
             const activa = tieneDatos(boleta);
 
             return (
@@ -508,11 +552,146 @@ function Index() {
                         />
                       </div>
                     )}
+
+                    <div className="print-hidden">
+                      <button
+                        type="button"
+                        role="switch"
+                        aria-checked={boleta.tieneAdicional}
+                        onClick={() =>
+                          update(boleta.id, {
+                            tieneAdicional: !boleta.tieneAdicional,
+                            ...(boleta.tieneAdicional
+                              ? {
+                                  adicionalRem: "",
+                                  adicionalNoRem: "",
+                                  adicionalLey: "",
+                                }
+                              : {}),
+                          })
+                        }
+                        className={`w-full flex items-center justify-between gap-3 rounded-lg border px-3 py-2 text-sm font-semibold transition-colors ${
+                          boleta.tieneAdicional
+                            ? "bg-mint/10 text-mint border-mint/40"
+                            : "bg-ink/50 text-mut border-line hover:text-fg"
+                        }`}
+                      >
+                        <span>Adicional de sueldo</span>
+                        <span
+                          className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${
+                            boleta.tieneAdicional ? "bg-mint/40" : "bg-line"
+                          }`}
+                        >
+                          <span
+                            className={`inline-block size-3.5 rounded-full bg-fg transition-transform ${
+                              boleta.tieneAdicional
+                                ? "translate-x-[18px]"
+                                : "translate-x-[3px]"
+                            }`}
+                          />
+                        </span>
+                      </button>
+                    </div>
+
+                    {boleta.tieneAdicional && (
+                      <div className="space-y-3">
+                        <div>
+                          <label
+                            htmlFor={`adrem-${boleta.id}`}
+                            className="block text-[12px] font-medium text-fg mb-1.5"
+                          >
+                            Adicional remunerativo
+                          </label>
+                          <input
+                            id={`adrem-${boleta.id}`}
+                            type="text"
+                            inputMode="decimal"
+                            aria-invalid={!adRemOk}
+                            value={boleta.adicionalRem ?? ""}
+                            onChange={(e) =>
+                              update(boleta.id, {
+                                adicionalRem: e.target.value,
+                              })
+                            }
+                            placeholder="0,00"
+                            className={`${inputBase} ${adRemOk ? inputOk : inputErr}`}
+                          />
+                        </div>
+                        <div>
+                          <label
+                            htmlFor={`adnorem-${boleta.id}`}
+                            className="block text-[12px] font-medium text-fg mb-1.5"
+                          >
+                            Adicional no remunerativo
+                          </label>
+                          <input
+                            id={`adnorem-${boleta.id}`}
+                            type="text"
+                            inputMode="decimal"
+                            aria-invalid={!adNoRemOk}
+                            value={boleta.adicionalNoRem ?? ""}
+                            onChange={(e) =>
+                              update(boleta.id, {
+                                adicionalNoRem: e.target.value,
+                              })
+                            }
+                            placeholder="0,00"
+                            className={`${inputBase} ${adNoRemOk ? inputOk : inputErr}`}
+                          />
+                        </div>
+                        <div>
+                          <label
+                            htmlFor={`adley-${boleta.id}`}
+                            className="block text-[12px] font-medium text-fg mb-1.5"
+                          >
+                            Adicional Ley 7991
+                          </label>
+                          <input
+                            id={`adley-${boleta.id}`}
+                            type="text"
+                            inputMode="decimal"
+                            aria-invalid={!adLeyOk}
+                            value={boleta.adicionalLey ?? ""}
+                            onChange={(e) =>
+                              update(boleta.id, {
+                                adicionalLey: e.target.value,
+                              })
+                            }
+                            placeholder="0,00"
+                            className={`${inputBase} ${adLeyOk ? inputOk : inputErr}`}
+                          />
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   <div className="rounded-xl bg-ink/50 ring-1 ring-inset ring-white/10 p-4">
                     {calc && activa ? (
                       <div className="space-y-1 font-mono text-[13px]">
+                        {calc.tieneAdicional && (
+                          <>
+                            <div className="flex items-center justify-between py-1.5 border-b border-line/60">
+                              <span className="text-mut">
+                                Remunerativo + adicional
+                              </span>
+                              <span>{formatCurrency(calc.remunerativo)}</span>
+                            </div>
+                            <div className="flex items-center justify-between py-1.5 border-b border-line/60">
+                              <span className="text-mut">
+                                No remunerativo + adicional
+                              </span>
+                              <span>
+                                {formatCurrency(calc.noRemunerativo)}
+                              </span>
+                            </div>
+                            <div className="flex items-center justify-between py-1.5 border-b border-line/60">
+                              <span className="text-mut">
+                                Ley 7991 + adicional
+                              </span>
+                              <span>{formatCurrency(calc.ley7991)}</span>
+                            </div>
+                          </>
+                        )}
                         {calc.usaAjuste ? (
                           <>
                             <div className="flex items-center justify-between py-1.5 border-b border-line/60">
