@@ -549,6 +549,117 @@ function Index() {
                         />
                       </div>
                     )}
+
+                    <div className="print-hidden">
+                      <button
+                        type="button"
+                        role="switch"
+                        aria-checked={boleta.tieneAdicional}
+                        onClick={() =>
+                          update(boleta.id, {
+                            tieneAdicional: !boleta.tieneAdicional,
+                            ...(boleta.tieneAdicional
+                              ? {
+                                  adicionalRem: "",
+                                  adicionalNoRem: "",
+                                  adicionalLey: "",
+                                }
+                              : {}),
+                          })
+                        }
+                        className={`w-full flex items-center justify-between gap-3 rounded-lg border px-3 py-2 text-sm font-semibold transition-colors ${
+                          boleta.tieneAdicional
+                            ? "bg-mint/10 text-mint border-mint/40"
+                            : "bg-ink/50 text-mut border-line hover:text-fg"
+                        }`}
+                      >
+                        <span>Adicional de sueldo</span>
+                        <span
+                          className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${
+                            boleta.tieneAdicional ? "bg-mint/40" : "bg-line"
+                          }`}
+                        >
+                          <span
+                            className={`inline-block size-3.5 rounded-full bg-fg transition-transform ${
+                              boleta.tieneAdicional
+                                ? "translate-x-[18px]"
+                                : "translate-x-[3px]"
+                            }`}
+                          />
+                        </span>
+                      </button>
+                    </div>
+
+                    {boleta.tieneAdicional && (
+                      <div className="space-y-3">
+                        <div>
+                          <label
+                            htmlFor={`adrem-${boleta.id}`}
+                            className="block text-[12px] font-medium text-fg mb-1.5"
+                          >
+                            Adicional remunerativo
+                          </label>
+                          <input
+                            id={`adrem-${boleta.id}`}
+                            type="text"
+                            inputMode="decimal"
+                            aria-invalid={!adRemOk}
+                            value={boleta.adicionalRem ?? ""}
+                            onChange={(e) =>
+                              update(boleta.id, {
+                                adicionalRem: e.target.value,
+                              })
+                            }
+                            placeholder="0,00"
+                            className={`${inputBase} ${adRemOk ? inputOk : inputErr}`}
+                          />
+                        </div>
+                        <div>
+                          <label
+                            htmlFor={`adnorem-${boleta.id}`}
+                            className="block text-[12px] font-medium text-fg mb-1.5"
+                          >
+                            Adicional no remunerativo
+                          </label>
+                          <input
+                            id={`adnorem-${boleta.id}`}
+                            type="text"
+                            inputMode="decimal"
+                            aria-invalid={!adNoRemOk}
+                            value={boleta.adicionalNoRem ?? ""}
+                            onChange={(e) =>
+                              update(boleta.id, {
+                                adicionalNoRem: e.target.value,
+                              })
+                            }
+                            placeholder="0,00"
+                            className={`${inputBase} ${adNoRemOk ? inputOk : inputErr}`}
+                          />
+                        </div>
+                        <div>
+                          <label
+                            htmlFor={`adley-${boleta.id}`}
+                            className="block text-[12px] font-medium text-fg mb-1.5"
+                          >
+                            Adicional Ley 7991
+                          </label>
+                          <input
+                            id={`adley-${boleta.id}`}
+                            type="text"
+                            inputMode="decimal"
+                            aria-invalid={!adLeyOk}
+                            value={boleta.adicionalLey ?? ""}
+                            onChange={(e) =>
+                              update(boleta.id, {
+                                adicionalLey: e.target.value,
+                              })
+                            }
+                            placeholder="0,00"
+                            className={`${inputBase} ${adLeyOk ? inputOk : inputErr}`}
+                          />
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   <div className="rounded-xl bg-ink/50 ring-1 ring-inset ring-white/10 p-4">
