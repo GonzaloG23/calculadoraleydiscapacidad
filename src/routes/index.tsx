@@ -94,6 +94,10 @@ interface CalculationResult {
   menos90: boolean;
   dias: number;
   valorDiario: number;
+  tieneAdicional: boolean;
+  adicionalRem: number;
+  adicionalNoRem: number;
+  adicionalLey: number;
   remunerativo: number;
   noRemunerativo: number;
   remAjustado: number;
@@ -112,6 +116,10 @@ interface Boleta {
   tratamiento: Tratamiento;
   menos90: boolean;
   dias: string;
+  tieneAdicional: boolean;
+  adicionalRem: string;
+  adicionalNoRem: string;
+  adicionalLey: string;
 }
 
 function nuevaBoleta(id: string): Boleta {
@@ -124,6 +132,10 @@ function nuevaBoleta(id: string): Boleta {
     tratamiento: "dentro",
     menos90: false,
     dias: "",
+    tieneAdicional: false,
+    adicionalRem: "",
+    adicionalNoRem: "",
+    adicionalLey: "",
   };
 }
 
