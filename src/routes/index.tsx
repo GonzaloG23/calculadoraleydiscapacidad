@@ -98,6 +98,7 @@ interface CalculationResult {
   adicionalRem: number;
   adicionalNoRem: number;
   adicionalLey: number;
+  deducHabAportes: number;
   remunerativo: number;
   noRemunerativo: number;
   ley7991: number;
@@ -121,6 +122,8 @@ interface Boleta {
   adicionalRem: string;
   adicionalNoRem: string;
   adicionalLey: string;
+  deducHabAportes: boolean;
+  deducHabAportesValor: string;
 }
 
 function nuevaBoleta(id: string): Boleta {
@@ -137,6 +140,8 @@ function nuevaBoleta(id: string): Boleta {
     adicionalRem: "",
     adicionalNoRem: "",
     adicionalLey: "",
+    deducHabAportes: false,
+    deducHabAportesValor: "",
   };
 }
 
@@ -148,6 +153,7 @@ function calcular(b: Boleta): CalculationResult | null {
   const adRem = b.adicionalRem ?? "";
   const adNoRem = b.adicionalNoRem ?? "";
   const adLey = b.adicionalLey ?? "";
+  const deducStr = b.deducHabAportesValor ?? "";
 
   if (
     !isValidAmount(rem) ||
@@ -157,7 +163,8 @@ function calcular(b: Boleta): CalculationResult | null {
     (b.tieneAdicional &&
       (!isValidAmount(adRem) ||
         !isValidAmount(adNoRem) ||
-        !isValidAmount(adLey)))
+        !isValidAmount(adLey))) ||
+    (b.deducHabAportes && !isValidAmount(deducStr))
   ) {
     return null;
   }
@@ -165,10 +172,13 @@ function calcular(b: Boleta): CalculationResult | null {
   const adicionalRem = adRem.trim() === "" ? 0 : parseAmount(adRem);
   const adicionalNoRem = adNoRem.trim() === "" ? 0 : parseAmount(adNoRem);
   const adicionalLey = adLey.trim() === "" ? 0 : parseAmount(adLey);
+  const deducHabAportes = deducStr.trim() === "" ? 0 : parseAmount(deducStr);
   const sumRem = b.tieneAdicional ? adicionalRem : 0;
   const sumNoRem = b.tieneAdicional ? adicionalNoRem : 0;
   const sumLey = b.tieneAdicional ? adicionalLey : 0;
-  const remunerativo = (rem.trim() === "" ? 0 : parseAmount(rem)) + sumRem;
+  const sumDeduc = b.deducHabAportes ? deducHabAportes : 0;
+  const remunerativo =
+    (rem.trim() === "" ? 0 : parseAmount(rem)) + sumRem + sumDeduc;
   const noRemunerativo =
     (noRem.trim() === "" ? 0 : parseAmount(noRem)) + sumNoRem;
   const ley7991 = (ley.trim() === "" ? 0 : parseAmount(ley)) + sumLey;
@@ -202,6 +212,7 @@ function calcular(b: Boleta): CalculationResult | null {
       adicionalRem,
       adicionalNoRem,
       adicionalLey,
+      deducHabAportes,
       remunerativo,
       noRemunerativo,
       ley7991,
@@ -222,6 +233,7 @@ function calcular(b: Boleta): CalculationResult | null {
     adicionalRem,
     adicionalNoRem,
     adicionalLey,
+    deducHabAportes,
     remunerativo,
     noRemunerativo,
     ley7991,
@@ -242,7 +254,8 @@ function tieneDatos(b: Boleta): boolean {
     (b.tieneAdicional &&
       ((b.adicionalRem ?? "").trim() !== "" ||
         (b.adicionalNoRem ?? "").trim() !== "" ||
-        (b.adicionalLey ?? "").trim() !== ""))
+        (b.adicionalLey ?? "").trim() !== "")) ||
+    (b.deducHabAportes && (b.deducHabAportesValor ?? "").trim() !== "")
   );
 }
 
@@ -356,6 +369,7 @@ function Index() {
             const adRemOk = isValidAmount(boleta.adicionalRem ?? "");
             const adNoRemOk = isValidAmount(boleta.adicionalNoRem ?? "");
             const adLeyOk = isValidAmount(boleta.adicionalLey ?? "");
+            const deducOk = isValidAmount(boleta.deducHabAportesValor ?? "");
             const activa = tieneDatos(boleta);
 
             return (
@@ -663,6 +677,67 @@ function Index() {
                         </div>
                       </div>
                     )}
+
+                    <div className="print-hidden">
+                      <button
+                        type="button"
+                        role="switch"
+                        aria-checked={boleta.deducHabAportes}
+                        onClick={() =>
+                          update(boleta.id, {
+                            deducHabAportes: !boleta.deducHabAportes,
+                            ...(boleta.deducHabAportes
+                              ? { deducHabAportesValor: "" }
+                              : {}),
+                          })
+                        }
+                        className={`w-full flex items-center justify-between gap-3 rounded-lg border px-3 py-2 text-sm font-semibold transition-colors ${
+                          boleta.deducHabAportes
+                            ? "bg-cyan/10 text-cyan border-cyan/40"
+                            : "bg-ink/50 text-mut border-line hover:text-fg"
+                        }`}
+                      >
+                        <span>Deduc. Hab c/aportes</span>
+                        <span
+                          className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${
+                            boleta.deducHabAportes ? "bg-cyan/40" : "bg-line"
+                          }`}
+                        >
+                          <span
+                            className={`inline-block size-3.5 rounded-full bg-fg transition-transform ${
+                              boleta.deducHabAportes
+                                ? "translate-x-[18px]"
+                                : "translate-x-[3px]"
+                            }`}
+                          />
+                        </span>
+                      </button>
+                    </div>
+
+                    {boleta.deducHabAportes && (
+                      <div>
+                        <label
+                          htmlFor={`deduc-${boleta.id}`}
+                          className="block text-[12px] font-medium text-fg mb-1.5"
+                        >
+                          Deduc. Hab c/aportes
+                        </label>
+                        <input
+                          id={`deduc-${boleta.id}`}
+                          type="text"
+                          inputMode="decimal"
+                          aria-invalid={!deducOk}
+                          value={boleta.deducHabAportesValor ?? ""}
+                          onChange={(e) =>
+                            update(boleta.id, {
+                              deducHabAportesValor: e.target.value,
+                            })
+                          }
+                          placeholder="0,00"
+                          className={`${inputBase} ${deducOk ? inputOk : inputErr}`}
+                        />
+                      </div>
+                    )}
                   </div>
 
                   <div className="rounded-xl bg-ink/50 ring-1 ring-inset ring-white/10 p-4">
@@ -672,7 +747,9 @@ function Index() {
                           <>
                             <div className="flex items-center justify-between py-1.5 border-b border-line/60">
                               <span className="text-mut">
-                                Remunerativo + adicional
+                                {calc.deducHabAportes > 0
+                                  ? "Remunerativo + adicional + deduc. hab c/aportes"
+                                  : "Remunerativo + adicional"}
                               </span>
                               <span>{formatCurrency(calc.remunerativo)}</span>
                             </div>
@@ -691,6 +768,14 @@ function Index() {
                               <span>{formatCurrency(calc.ley7991)}</span>
                             </div>
                           </>
+                        )}
+                        {!calc.tieneAdicional && calc.deducHabAportes > 0 && (
+                          <div className="flex items-center justify-between py-1.5 border-b border-line/60">
+                            <span className="text-mut">
+                              Remunerativo + deduc. hab c/aportes
+                            </span>
+                            <span>{formatCurrency(calc.remunerativo)}</span>
+                          </div>
                         )}
                         {calc.usaAjuste ? (
                           <>
