@@ -677,6 +677,67 @@ function Index() {
                         </div>
                       </div>
                     )}
+
+                    <div className="print-hidden">
+                      <button
+                        type="button"
+                        role="switch"
+                        aria-checked={boleta.deducHabAportes}
+                        onClick={() =>
+                          update(boleta.id, {
+                            deducHabAportes: !boleta.deducHabAportes,
+                            ...(boleta.deducHabAportes
+                              ? { deducHabAportesValor: "" }
+                              : {}),
+                          })
+                        }
+                        className={`w-full flex items-center justify-between gap-3 rounded-lg border px-3 py-2 text-sm font-semibold transition-colors ${
+                          boleta.deducHabAportes
+                            ? "bg-cyan/10 text-cyan border-cyan/40"
+                            : "bg-ink/50 text-mut border-line hover:text-fg"
+                        }`}
+                      >
+                        <span>Deduc. Hab c/aportes</span>
+                        <span
+                          className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${
+                            boleta.deducHabAportes ? "bg-cyan/40" : "bg-line"
+                          }`}
+                        >
+                          <span
+                            className={`inline-block size-3.5 rounded-full bg-fg transition-transform ${
+                              boleta.deducHabAportes
+                                ? "translate-x-[18px]"
+                                : "translate-x-[3px]"
+                            }`}
+                          />
+                        </span>
+                      </button>
+                    </div>
+
+                    {boleta.deducHabAportes && (
+                      <div>
+                        <label
+                          htmlFor={`deduc-${boleta.id}`}
+                          className="block text-[12px] font-medium text-fg mb-1.5"
+                        >
+                          Deduc. Hab c/aportes
+                        </label>
+                        <input
+                          id={`deduc-${boleta.id}`}
+                          type="text"
+                          inputMode="decimal"
+                          aria-invalid={!deducOk}
+                          value={boleta.deducHabAportesValor ?? ""}
+                          onChange={(e) =>
+                            update(boleta.id, {
+                              deducHabAportesValor: e.target.value,
+                            })
+                          }
+                          placeholder="0,00"
+                          className={`${inputBase} ${deducOk ? inputOk : inputErr}`}
+                        />
+                      </div>
+                    )}
                   </div>
 
                   <div className="rounded-xl bg-ink/50 ring-1 ring-inset ring-white/10 p-4">
