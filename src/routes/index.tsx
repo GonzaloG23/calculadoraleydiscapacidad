@@ -98,6 +98,7 @@ interface CalculationResult {
   adicionalRem: number;
   adicionalNoRem: number;
   adicionalLey: number;
+  deducHabAportes: number;
   remunerativo: number;
   noRemunerativo: number;
   ley7991: number;
@@ -121,6 +122,8 @@ interface Boleta {
   adicionalRem: string;
   adicionalNoRem: string;
   adicionalLey: string;
+  deducHabAportes: boolean;
+  deducHabAportesValor: string;
 }
 
 function nuevaBoleta(id: string): Boleta {
@@ -137,6 +140,8 @@ function nuevaBoleta(id: string): Boleta {
     adicionalRem: "",
     adicionalNoRem: "",
     adicionalLey: "",
+    deducHabAportes: false,
+    deducHabAportesValor: "",
   };
 }
 
