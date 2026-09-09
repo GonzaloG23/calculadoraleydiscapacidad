@@ -747,7 +747,9 @@ function Index() {
                           <>
                             <div className="flex items-center justify-between py-1.5 border-b border-line/60">
                               <span className="text-mut">
-                                Remunerativo + adicional
+                                {calc.deducHabAportes > 0
+                                  ? "Remunerativo + adicional + deduc. hab c/aportes"
+                                  : "Remunerativo + adicional"}
                               </span>
                               <span>{formatCurrency(calc.remunerativo)}</span>
                             </div>
@@ -766,6 +768,14 @@ function Index() {
                               <span>{formatCurrency(calc.ley7991)}</span>
                             </div>
                           </>
+                        )}
+                        {!calc.tieneAdicional && calc.deducHabAportes > 0 && (
+                          <div className="flex items-center justify-between py-1.5 border-b border-line/60">
+                            <span className="text-mut">
+                              Remunerativo + deduc. hab c/aportes
+                            </span>
+                            <span>{formatCurrency(calc.remunerativo)}</span>
+                          </div>
                         )}
                         {calc.usaAjuste ? (
                           <>
