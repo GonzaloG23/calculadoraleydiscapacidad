@@ -369,6 +369,7 @@ function Index() {
             const adRemOk = isValidAmount(boleta.adicionalRem ?? "");
             const adNoRemOk = isValidAmount(boleta.adicionalNoRem ?? "");
             const adLeyOk = isValidAmount(boleta.adicionalLey ?? "");
+            const deducOk = isValidAmount(boleta.deducHabAportesValor ?? "");
             const activa = tieneDatos(boleta);
 
             return (
