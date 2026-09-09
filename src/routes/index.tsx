@@ -254,7 +254,8 @@ function tieneDatos(b: Boleta): boolean {
     (b.tieneAdicional &&
       ((b.adicionalRem ?? "").trim() !== "" ||
         (b.adicionalNoRem ?? "").trim() !== "" ||
-        (b.adicionalLey ?? "").trim() !== ""))
+        (b.adicionalLey ?? "").trim() !== "")) ||
+    (b.deducHabAportes && (b.deducHabAportesValor ?? "").trim() !== "")
   );
 }
 
