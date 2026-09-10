@@ -99,6 +99,10 @@ interface CalculationResult {
   adicionalNoRem: number;
   adicionalLey: number;
   deducHabAportes: number;
+  tieneExcepcional: boolean;
+  excepcionalSac: number;
+  excepcionalAyudaSocial: number;
+  excepcionalLey: number;
   remunerativo: number;
   noRemunerativo: number;
   ley7991: number;
@@ -124,6 +128,10 @@ interface Boleta {
   adicionalLey: string;
   deducHabAportes: boolean;
   deducHabAportesValor: string;
+  tieneExcepcional: boolean;
+  excepcionalSac: string;
+  excepcionalAyudaSocial: string;
+  excepcionalLey: string;
 }
 
 function nuevaBoleta(id: string): Boleta {
@@ -142,6 +150,10 @@ function nuevaBoleta(id: string): Boleta {
     adicionalLey: "",
     deducHabAportes: false,
     deducHabAportesValor: "",
+    tieneExcepcional: false,
+    excepcionalSac: "",
+    excepcionalAyudaSocial: "",
+    excepcionalLey: "",
   };
 }
 
@@ -154,6 +166,9 @@ function calcular(b: Boleta): CalculationResult | null {
   const adNoRem = b.adicionalNoRem ?? "";
   const adLey = b.adicionalLey ?? "";
   const deducStr = b.deducHabAportesValor ?? "";
+  const excSac = b.excepcionalSac ?? "";
+  const excAyudaSocial = b.excepcionalAyudaSocial ?? "";
+  const excLey = b.excepcionalLey ?? "";
 
   if (
     !isValidAmount(rem) ||
@@ -164,7 +179,11 @@ function calcular(b: Boleta): CalculationResult | null {
       (!isValidAmount(adRem) ||
         !isValidAmount(adNoRem) ||
         !isValidAmount(adLey))) ||
-    (b.deducHabAportes && !isValidAmount(deducStr))
+    (b.deducHabAportes && !isValidAmount(deducStr)) ||
+    (b.tieneExcepcional &&
+      (!isValidAmount(excSac) ||
+        !isValidAmount(excAyudaSocial) ||
+        !isValidAmount(excLey)))
   ) {
     return null;
   }
@@ -173,14 +192,22 @@ function calcular(b: Boleta): CalculationResult | null {
   const adicionalNoRem = adNoRem.trim() === "" ? 0 : parseAmount(adNoRem);
   const adicionalLey = adLey.trim() === "" ? 0 : parseAmount(adLey);
   const deducHabAportes = deducStr.trim() === "" ? 0 : parseAmount(deducStr);
+  const excepcionalSac = excSac.trim() === "" ? 0 : parseAmount(excSac);
+  const excepcionalAyudaSocial =
+    excAyudaSocial.trim() === "" ? 0 : parseAmount(excAyudaSocial);
+  const excepcionalLey = excLey.trim() === "" ? 0 : parseAmount(excLey);
   const sumRem = b.tieneAdicional ? adicionalRem : 0;
   const sumNoRem = b.tieneAdicional ? adicionalNoRem : 0;
   const sumLey = b.tieneAdicional ? adicionalLey : 0;
   const sumDeduc = b.deducHabAportes ? deducHabAportes : 0;
+  const subSac = b.tieneExcepcional ? excepcionalSac : 0;
+  const subAyudaSocial = b.tieneExcepcional ? excepcionalAyudaSocial : 0;
+  const subExcLey = b.tieneExcepcional ? excepcionalLey : 0;
   const remunerativo =
-    (rem.trim() === "" ? 0 : parseAmount(rem)) + sumRem + sumDeduc;
+    (rem.trim() === "" ? 0 : parseAmount(rem)) + sumRem + sumDeduc - subSac;
   const noRemunerativo =
-    (noRem.trim() === "" ? 0 : parseAmount(noRem)) + sumNoRem;
+    (noRem.trim() === "" ? 0 : parseAmount(noRem)) + sumNoRem -
+    subAyudaSocial - subExcLey;
   const ley7991 = (ley.trim() === "" ? 0 : parseAmount(ley)) + sumLey;
   const dias = diasStr.trim() === "" ? 0 : parseAmount(diasStr);
 
@@ -213,6 +240,10 @@ function calcular(b: Boleta): CalculationResult | null {
       adicionalNoRem,
       adicionalLey,
       deducHabAportes,
+      tieneExcepcional: b.tieneExcepcional,
+      excepcionalSac,
+      excepcionalAyudaSocial,
+      excepcionalLey,
       remunerativo,
       noRemunerativo,
       ley7991,
@@ -234,6 +265,10 @@ function calcular(b: Boleta): CalculationResult | null {
     adicionalNoRem,
     adicionalLey,
     deducHabAportes,
+    tieneExcepcional: b.tieneExcepcional,
+    excepcionalSac,
+    excepcionalAyudaSocial,
+    excepcionalLey,
     remunerativo,
     noRemunerativo,
     ley7991,
@@ -255,7 +290,11 @@ function tieneDatos(b: Boleta): boolean {
       ((b.adicionalRem ?? "").trim() !== "" ||
         (b.adicionalNoRem ?? "").trim() !== "" ||
         (b.adicionalLey ?? "").trim() !== "")) ||
-    (b.deducHabAportes && (b.deducHabAportesValor ?? "").trim() !== "")
+    (b.deducHabAportes && (b.deducHabAportesValor ?? "").trim() !== "") ||
+    (b.tieneExcepcional &&
+      ((b.excepcionalSac ?? "").trim() !== "" ||
+        (b.excepcionalAyudaSocial ?? "").trim() !== "" ||
+        (b.excepcionalLey ?? "").trim() !== ""))
   );
 }
 
@@ -370,6 +409,9 @@ function Index() {
             const adNoRemOk = isValidAmount(boleta.adicionalNoRem ?? "");
             const adLeyOk = isValidAmount(boleta.adicionalLey ?? "");
             const deducOk = isValidAmount(boleta.deducHabAportesValor ?? "");
+            const excSacOk = isValidAmount(boleta.excepcionalSac ?? "");
+            const excAyudaOk = isValidAmount(boleta.excepcionalAyudaSocial ?? "");
+            const excLeyOk = isValidAmount(boleta.excepcionalLey ?? "");
             const activa = tieneDatos(boleta);
 
             return (
@@ -738,6 +780,117 @@ function Index() {
                         />
                       </div>
                     )}
+
+                    <div className="print-hidden">
+                      <button
+                        type="button"
+                        role="switch"
+                        aria-checked={boleta.tieneExcepcional}
+                        onClick={() =>
+                          update(boleta.id, {
+                            tieneExcepcional: !boleta.tieneExcepcional,
+                            ...(boleta.tieneExcepcional
+                              ? {
+                                  excepcionalSac: "",
+                                  excepcionalAyudaSocial: "",
+                                  excepcionalLey: "",
+                                }
+                              : {}),
+                          })
+                        }
+                        className={`w-full flex items-center justify-between gap-3 rounded-lg border px-3 py-2 text-sm font-semibold transition-colors ${
+                          boleta.tieneExcepcional
+                            ? "bg-err/10 text-err border-err/40"
+                            : "bg-ink/50 text-mut border-line hover:text-fg"
+                        }`}
+                      >
+                        <span>Adicional excepcional</span>
+                        <span
+                          className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${
+                            boleta.tieneExcepcional ? "bg-err/40" : "bg-line"
+                          }`}
+                        >
+                          <span
+                            className={`inline-block size-3.5 rounded-full bg-fg transition-transform ${
+                              boleta.tieneExcepcional
+                                ? "translate-x-[18px]"
+                                : "translate-x-[3px]"
+                            }`}
+                          />
+                        </span>
+                      </button>
+                    </div>
+
+                    {boleta.tieneExcepcional && (
+                      <div className="space-y-3">
+                        <div>
+                          <label
+                            htmlFor={`excsac-${boleta.id}`}
+                            className="block text-[12px] font-medium text-fg mb-1.5"
+                          >
+                            SAC <span className="text-faint font-normal">(se resta del remunerativo)</span>
+                          </label>
+                          <input
+                            id={`excsac-${boleta.id}`}
+                            type="text"
+                            inputMode="decimal"
+                            aria-invalid={!excSacOk}
+                            value={boleta.excepcionalSac ?? ""}
+                            onChange={(e) =>
+                              update(boleta.id, {
+                                excepcionalSac: e.target.value,
+                              })
+                            }
+                            placeholder="0,00"
+                            className={`${inputBase} ${excSacOk ? inputOk : inputErr}`}
+                          />
+                        </div>
+                        <div>
+                          <label
+                            htmlFor={`excayuda-${boleta.id}`}
+                            className="block text-[12px] font-medium text-fg mb-1.5"
+                          >
+                            Ayuda Social <span className="text-faint font-normal">(se resta del no remunerativo)</span>
+                          </label>
+                          <input
+                            id={`excayuda-${boleta.id}`}
+                            type="text"
+                            inputMode="decimal"
+                            aria-invalid={!excAyudaOk}
+                            value={boleta.excepcionalAyudaSocial ?? ""}
+                            onChange={(e) =>
+                              update(boleta.id, {
+                                excepcionalAyudaSocial: e.target.value,
+                              })
+                            }
+                            placeholder="0,00"
+                            className={`${inputBase} ${excAyudaOk ? inputOk : inputErr}`}
+                          />
+                        </div>
+                        <div>
+                          <label
+                            htmlFor={`excley-${boleta.id}`}
+                            className="block text-[12px] font-medium text-fg mb-1.5"
+                          >
+                            Ley 7991 <span className="text-faint font-normal">(se resta del no remunerativo)</span>
+                          </label>
+                          <input
+                            id={`excley-${boleta.id}`}
+                            type="text"
+                            inputMode="decimal"
+                            aria-invalid={!excLeyOk}
+                            value={boleta.excepcionalLey ?? ""}
+                            onChange={(e) =>
+                              update(boleta.id, {
+                                excepcionalLey: e.target.value,
+                              })
+                            }
+                            placeholder="0,00"
+                            className={`${inputBase} ${excLeyOk ? inputOk : inputErr}`}
+                          />
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   <div className="rounded-xl bg-ink/50 ring-1 ring-inset ring-white/10 p-4">
@@ -776,6 +929,40 @@ function Index() {
                             </span>
                             <span>{formatCurrency(calc.remunerativo)}</span>
                           </div>
+                        )}
+                        {calc.tieneExcepcional && (
+                          <>
+                            {calc.excepcionalSac > 0 && (
+                              <div className="flex items-center justify-between py-1.5 border-b border-line/60">
+                                <span className="text-mut">
+                                  − SAC
+                                </span>
+                                <span className="text-err">
+                                  −{formatCurrency(calc.excepcionalSac)}
+                                </span>
+                              </div>
+                            )}
+                            {calc.excepcionalAyudaSocial > 0 && (
+                              <div className="flex items-center justify-between py-1.5 border-b border-line/60">
+                                <span className="text-mut">
+                                  − Ayuda Social
+                                </span>
+                                <span className="text-err">
+                                  −{formatCurrency(calc.excepcionalAyudaSocial)}
+                                </span>
+                              </div>
+                            )}
+                            {calc.excepcionalLey > 0 && (
+                              <div className="flex items-center justify-between py-1.5 border-b border-line/60">
+                                <span className="text-mut">
+                                  − Ley 7991 (excepcional)
+                                </span>
+                                <span className="text-err">
+                                  −{formatCurrency(calc.excepcionalLey)}
+                                </span>
+                              </div>
+                            )}
+                          </>
                         )}
                         {calc.usaAjuste ? (
                           <>
