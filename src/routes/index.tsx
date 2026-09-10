@@ -804,7 +804,7 @@ function Index() {
                             : "bg-ink/50 text-mut border-line hover:text-fg"
                         }`}
                       >
-                        <span>Adicional excepcional</span>
+                        <span>Casos especiales: Aguinaldo, Ayuda Social, etc</span>
                         <span
                           className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${
                             boleta.tieneExcepcional ? "bg-err/40" : "bg-line"
@@ -828,7 +828,7 @@ function Index() {
                             htmlFor={`excsac-${boleta.id}`}
                             className="block text-[12px] font-medium text-fg mb-1.5"
                           >
-                            SAC <span className="text-faint font-normal">(se resta del remunerativo)</span>
+                            Aguinaldo <span className="text-faint font-normal">(se resta del remunerativo)</span>
                           </label>
                           <input
                             id={`excsac-${boleta.id}`}
@@ -935,7 +935,7 @@ function Index() {
                             {calc.excepcionalSac > 0 && (
                               <div className="flex items-center justify-between py-1.5 border-b border-line/60">
                                 <span className="text-mut">
-                                  − SAC
+                                  − Aguinaldo
                                 </span>
                                 <span className="text-err">
                                   −{formatCurrency(calc.excepcionalSac)}
